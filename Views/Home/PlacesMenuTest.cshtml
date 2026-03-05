@@ -1,0 +1,222 @@
+@{
+    ViewData["Title"] = "Places Menu Test";
+    var apiKey = (string)(ViewBag.GoogleMapsApiKey ?? string.Empty);
+}
+
+<div class="container" style="padding:16px;">
+    <h2>Google Places – Restaurant Menu Test</h2>
+    @if (string.IsNullOrWhiteSpace(apiKey))
+    {
+        <div style="margin:12px 0; padding:12px; background:#fff3cd; color:#664d03; border:1px solid #ffe69c; border-radius:6px;">
+            Google Maps API key is not configured. Add <code>GoogleMaps:ApiKey</code> to your appsettings.
+        </div>
+    }
+
+    <div style="display:flex; gap:16px; flex-wrap:wrap;">
+        <div style="flex:1 1 380px; min-width:320px;">
+            <div style="margin-bottom:8px; display:flex; gap:8px; align-items:center;">
+                <input id="searchInput" type="text" placeholder="Search restaurants (e.g., pizza)" style="flex:1; padding:8px 10px; border:1px solid #ccc; border-radius:6px;" />
+                <button id="searchBtn" style="padding:8px 12px; border:0; background:#2563eb; color:#fff; border-radius:6px; cursor:pointer;">Search</button>
+            </div>
+            <div style="margin-bottom:8px; font-size:0.9rem; color:#555;">
+                The search is restricted to type <strong>restaurant</strong>. Click a result to load details and show any menu links.
+            </div>
+            <div id="results" style="max-height:420px; overflow:auto; border:1px solid #e5e7eb; border-radius:8px;"></div>
+        </div>
+        <div style="flex:2 1 480px; min-width:360px;">
+            <div id="map" style="width:100%; height:520px; border-radius:8px; border:1px solid #e5e7eb;"></div>
+            <div id="placeDetails" style="margin-top:12px;"></div>
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(apiKey))
+{
+    <script>
+        (function () {
+            let map;
+            let placesService;
+            let infoWindow;
+            let markers = [];
+            let currentCenter;
+
+            const defaultCenter = { lat: 7.0731, lng: 125.6128 }; // Davao City fallback
+
+            function initMap() {
+                map = new google.maps.Map(document.getElementById('map'), {
+                    center: defaultCenter,
+                    zoom: 14,
+                });
+                infoWindow = new google.maps.InfoWindow();
+                placesService = new google.maps.places.PlacesService(map);
+
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition((pos) => {
+                        currentCenter = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                        map.setCenter(currentCenter);
+                        searchRestaurants();
+                    }, () => {
+                        currentCenter = defaultCenter;
+                        searchRestaurants();
+                    }, { timeout: 5000 });
+                } else {
+                    currentCenter = defaultCenter;
+                    searchRestaurants();
+                }
+
+                document.getElementById('searchBtn').addEventListener('click', () => searchRestaurants());
+                document.getElementById('searchInput').addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') searchRestaurants();
+                });
+            }
+
+            function clearMarkers() {
+                for (const m of markers) { m.setMap(null); }
+                markers = [];
+            }
+
+            function renderResults(list) {
+                const container = document.getElementById('results');
+                container.innerHTML = '';
+                if (!list || list.length === 0) {
+                    container.innerHTML = '<div style="padding:10px">No restaurants found.</div>';
+                    return;
+                }
+                for (const place of list) {
+                    const div = document.createElement('div');
+                    div.style.padding = '10px';
+                    div.style.borderBottom = '1px solid #eee';
+                    div.style.cursor = 'pointer';
+                    div.addEventListener('click', () => showPlace(place.place_id));
+                    div.innerHTML = `
+                        <div style="font-weight:600;">${place.name ?? ''}</div>
+                        <div style="font-size:0.9rem; color:#555;">${place.vicinity ?? place.formatted_address ?? ''}</div>
+                        <div style="font-size:0.85rem; color:#6b7280;">Rating: ${place.rating ?? 'N/A'} (${place.user_ratings_total ?? 0})</div>
+                    `;
+                    container.appendChild(div);
+                }
+            }
+
+            function searchRestaurants() {
+                const query = document.getElementById('searchInput').value?.trim();
+                clearMarkers();
+                document.getElementById('placeDetails').innerHTML = '';
+
+                const request = {
+                    location: currentCenter || defaultCenter,
+                    radius: 3000,
+                    type: 'restaurant',
+                };
+                if (query) request.keyword = query;
+
+                placesService.nearbySearch(request, (results, status, pagination) => {
+                    if (status !== google.maps.places.PlacesServiceStatus.OK || !results) {
+                        renderResults([]);
+                        return;
+                    }
+
+                    for (const place of results) {
+                        const marker = new google.maps.Marker({
+                            map,
+                            position: place.geometry?.location,
+                            title: place.name,
+                        });
+                        marker.addListener('click', () => showPlace(place.place_id));
+                        markers.push(marker);
+                    }
+
+                    renderResults(results);
+
+                    if (pagination && pagination.hasNextPage) {
+                        // Optionally fetch more pages by calling pagination.nextPage()
+                    }
+                });
+            }
+
+            function showPlace(placeId) {
+                const fields = [
+                    'place_id', 'name', 'formatted_address', 'vicinity', 'geometry',
+                    'rating', 'user_ratings_total', 'opening_hours', 'url', 'website', 'types',
+                    'editorial_summary', 'photos'
+                ];
+                const request = { placeId, fields };
+                placesService.getDetails(request, (place, status) => {
+                    if (status !== google.maps.places.PlacesServiceStatus.OK || !place) {
+                        document.getElementById('placeDetails').innerHTML = '<div style="padding:10px">Failed to load place details.</div>';
+                        return;
+                    }
+
+                    map.panTo(place.geometry.location);
+
+                    const maybeMenuLink = extractMenuLink(place);
+                    const detailsHtml = buildPlaceDetailsHtml(place, maybeMenuLink);
+                    document.getElementById('placeDetails').innerHTML = detailsHtml;
+                });
+            }
+
+            function extractMenuLink(place) {
+                // Google Places does not provide a structured menu API field for all regions.
+                // Some partners surface a menu URL within the website or editorial summary.
+                // Strategy: prefer a URL containing 'menu' from website; otherwise null.
+                if (place.website && /menu/i.test(place.website)) return place.website;
+                // Heuristic scan in summary text
+                const summary = place.editorial_summary?.overview ?? '';
+                const urlMatch = summary.match(/https?:\/\/[^\s)]+/i);
+                if (urlMatch && /menu/i.test(urlMatch[0])) return urlMatch[0];
+                return null;
+            }
+
+            function esc(text) {
+                const div = document.createElement('div');
+                div.textContent = text ?? '';
+                return div.innerHTML;
+            }
+
+            function buildPlaceDetailsHtml(place, menuUrl) {
+                const photoUrl = place.photos && place.photos.length ? place.photos[0].getUrl({ maxWidth: 600 }) : null;
+                const types = (place.types || []).filter(t => t !== 'point_of_interest' && t !== 'establishment').join(', ');
+                const websiteLink = place.website ? `<a href="${place.website}" target="_blank" rel="noopener">Website</a>` : '';
+                const mapsLink = place.url ? `<a href="${place.url}" target="_blank" rel="noopener">Open in Google Maps</a>` : '';
+                const menuLink = menuUrl ? `<a href="${menuUrl}" target="_blank" rel="noopener">Menu</a>` : '';
+
+                return `
+                    <div style="padding:12px; border:1px solid #e5e7eb; border-radius:8px;">
+                        <div style="display:flex; gap:12px; align-items:flex-start;">
+                            ${photoUrl ? `<img src="${photoUrl}" alt="${esc(place.name)}" style="width:160px; height:120px; object-fit:cover; border-radius:6px; border:1px solid #eee;"/>` : ''}
+                            <div>
+                                <div style="font-size:1.1rem; font-weight:700;">${esc(place.name)}</div>
+                                <div style="color:#555;">${esc(place.formatted_address || place.vicinity || '')}</div>
+                                <div style="color:#6b7280; font-size:0.9rem;">${esc(types)}</div>
+                                <div style="margin-top:6px; font-size:0.9rem;">Rating: ${place.rating ?? 'N/A'} (${place.user_ratings_total ?? 0})</div>
+                                <div style="margin-top:6px; display:flex; gap:12px; flex-wrap:wrap;">
+                                    ${menuLink}
+                                    ${websiteLink}
+                                    ${mapsLink}
+                                </div>
+                            </div>
+                        </div>
+                        ${place.opening_hours ? renderOpeningHours(place.opening_hours) : ''}
+                        ${place.editorial_summary?.overview ? `<div style="margin-top:10px; color:#374151;">${esc(place.editorial_summary.overview)}</div>` : ''}
+                        ${!menuUrl ? `<div style="margin-top:10px; padding:8px; background:#fff7ed; border:1px solid #ffedd5; border-radius:6px; color:#9a3412;">No explicit menu found. Try the website link.</div>` : ''}
+                    </div>
+                `;
+            }
+
+            function renderOpeningHours(hours) {
+                try {
+                    const openNow = hours.isOpen() ? 'Open now' : 'Closed now';
+                    const weekdayText = (hours.weekday_text || []).map(t => `<div>${t}</div>`).join('');
+                    return `<div style="margin-top:10px;">
+                        <div style="font-weight:600;">${openNow}</div>
+                        <div style="margin-top:4px; font-size:0.9rem; color:#374151;">${weekdayText}</div>
+                    </div>`;
+                } catch (e) {
+                    return '';
+                }
+            }
+
+            window.initPlacesMenuTestMap = initMap;
+        })();
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=@apiKey&libraries=places&callback=initPlacesMenuTestMap" async defer></script>
+}

@@ -1,0 +1,121 @@
+@{
+    ViewData["Title"] = "Pending Approvals";
+    var placeId = ViewBag.PlaceId as string;
+}
+
+<div class="min-h-screen bg-gradient-to-br from-[#FFF5E1] to-white py-8 px-4">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <h1 class="text-3xl font-bold text-[#47682C] mb-2">Pending Edit Approvals</h1>
+            <p class="text-gray-600">Review and approve or reject pending edits for your restaurants</p>
+        </div>
+
+        <div id="pending-versions-list" class="space-y-4">
+            <p class="text-gray-500">Loading...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function loadPendingApprovals() {
+        try {
+            const placeId = '@placeId';
+            if (!placeId) {
+                document.getElementById('pending-versions-list').innerHTML = 
+                    '<p class="text-gray-500">No restaurant specified.</p>';
+                return;
+            }
+
+            const response = await fetch(`/api/RestaurantEdit/pending/${placeId}`);
+            if (response.ok) {
+                const versions = await response.json();
+                const list = document.getElementById('pending-versions-list');
+                
+                if (versions.length === 0) {
+                    list.innerHTML = '<div class="bg-white rounded-2xl shadow-lg p-6 text-center"><p class="text-gray-500">No pending edits.</p></div>';
+                } else {
+                    list.innerHTML = versions.map(version => `
+                        <div class="bg-white rounded-2xl shadow-lg p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <h3 class="text-xl font-bold text-[#47682C]">Version ${version.versionNumber}</h3>
+                                    <p class="text-sm text-gray-600">Created by ${version.createdByUser?.name} on ${new Date(version.createdAt).toLocaleDateString()}</p>
+                                </div>
+                                <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-semibold">Pending</span>
+                            </div>
+                            
+                            <div class="space-y-2 mb-4">
+                                <p><span class="font-semibold text-[#47682C]">Name:</span> ${version.name}</p>
+                                ${version.address ? `<p><span class="font-semibold text-[#47682C]">Address:</span> ${version.address}</p>` : ''}
+                                ${version.cuisineType ? `<p><span class="font-semibold text-[#47682C]">Cuisine:</span> ${version.cuisineType}</p>` : ''}
+                                ${version.description ? `<p><span class="font-semibold text-[#47682C]">Description:</span> ${version.description}</p>` : ''}
+                            </div>
+                            
+                            <div class="flex gap-3 mt-4">
+                                <button onclick="approveVersion(${version.versionId})" 
+                                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                                    Approve
+                                </button>
+                                <button onclick="rejectVersion(${version.versionId})" 
+                                        class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                                    Reject
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            }
+        } catch (error) {
+            console.error('Error loading pending approvals:', error);
+        }
+    }
+
+    async function approveVersion(versionId) {
+        try {
+            const response = await fetch(`/api/RestaurantEdit/approve/${versionId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                alert('Version approved successfully!');
+                loadPendingApprovals();
+            } else {
+                alert('Failed to approve version.');
+            }
+        } catch (error) {
+            console.error('Error approving version:', error);
+            alert('An error occurred.');
+        }
+    }
+
+    async function rejectVersion(versionId) {
+        const reason = prompt('Please provide a reason for rejection:');
+        if (!reason) return;
+
+        try {
+            const response = await fetch(`/api/RestaurantEdit/reject/${versionId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ reason })
+            });
+
+            if (response.ok) {
+                alert('Version rejected.');
+                loadPendingApprovals();
+            } else {
+                alert('Failed to reject version.');
+            }
+        } catch (error) {
+            console.error('Error rejecting version:', error);
+            alert('An error occurred.');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadPendingApprovals);
+</script>
+

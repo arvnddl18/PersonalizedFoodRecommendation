@@ -1,0 +1,67 @@
+@{
+    ViewData["Title"] = "Owner Dashboard";
+}
+
+<div class="min-h-screen bg-gradient-to-br from-[#FFF5E1] to-white py-8 px-4">
+    <div class="max-w-6xl mx-auto">
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <h1 class="text-3xl font-bold text-[#47682C] mb-2">Restaurant Owner Dashboard</h1>
+            <p class="text-gray-600">Manage your restaurant claims and pending edit approvals</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- My Restaurants -->
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <h2 class="text-2xl font-bold text-[#47682C] mb-4">My Restaurants</h2>
+                <div id="my-restaurants-list" class="space-y-3">
+                    <p class="text-gray-500">Loading...</p>
+                </div>
+            </div>
+
+            <!-- Pending Approvals -->
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <h2 class="text-2xl font-bold text-[#47682C] mb-4">Pending Edit Approvals</h2>
+                <div id="pending-approvals-list" class="space-y-3">
+                    <p class="text-gray-500">Loading...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function loadDashboard() {
+        try {
+            // Load my restaurants
+            const restaurantsResponse = await fetch('/api/RestaurantOwner/my-restaurants');
+            if (restaurantsResponse.ok) {
+                const restaurants = await restaurantsResponse.json();
+                const restaurantsList = document.getElementById('my-restaurants-list');
+                
+                if (restaurants.length === 0) {
+                    restaurantsList.innerHTML = '<p class="text-gray-500">You haven\'t claimed any restaurants yet.</p>';
+                } else {
+                    restaurantsList.innerHTML = restaurants.map(restaurant => `
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <h3 class="font-semibold text-[#47682C]">${restaurant.restaurantName}</h3>
+                            <p class="text-sm text-gray-600">Status: ${restaurant.verificationStatus}</p>
+                            <a href="/Restaurant/Details?placeId=${restaurant.placeId}" 
+                               class="text-[#196EF3] hover:underline text-sm mt-2 inline-block">
+                                View Details
+                            </a>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            // Load pending approvals (need to check each restaurant)
+            const pendingList = document.getElementById('pending-approvals-list');
+            pendingList.innerHTML = '<p class="text-gray-500">Check individual restaurants for pending edits.</p>';
+        } catch (error) {
+            console.error('Error loading dashboard:', error);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadDashboard);
+</script>
+

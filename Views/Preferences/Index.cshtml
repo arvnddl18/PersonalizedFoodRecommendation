@@ -1,0 +1,945 @@
+@model Capstone.Models.PreferencesViewModel
+@inject IHttpContextAccessor HttpContextAccessor
+
+@{
+    Layout = null;
+    ViewData["Title"] = "Welcome - Complete Your Profile";
+    var userAgent = Context.Request.Headers["User-Agent"].ToString();
+    bool isMobile = !string.IsNullOrEmpty(userAgent) && (
+        userAgent.Contains("Mobi", System.StringComparison.OrdinalIgnoreCase) ||
+        userAgent.Contains("Android", System.StringComparison.OrdinalIgnoreCase) ||
+        userAgent.Contains("iPhone", System.StringComparison.OrdinalIgnoreCase) ||
+        userAgent.Contains("iPad", System.StringComparison.OrdinalIgnoreCase) ||
+        userAgent.Contains("Windows Phone", System.StringComparison.OrdinalIgnoreCase)
+    );
+}
+
+@if (!isMobile)
+{
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Foodiesaur</title>
+        <link rel="icon" type="image/svg+xml" href="~/images/titlelogo.svg">
+        <link rel="alternate icon" type="image/png" href="~/images/titlelogo.png">
+        <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/Capstone.styles.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/output.css" asp-append-version="true" />
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    </head>
+
+    <body class="bg-gradient-to-br from-emerald-50 via-white to-amber-50 min-h-screen">
+        <div class="flex min-h-screen">
+            <!-- Progress Sidebar -->
+            <div class="w-100 bg-white shadow-xl border-r border-gray-100">
+                <div class="p-8">
+                    <!-- Logo/Header -->
+                    <div class="mb-8">
+                        <h1 class="text-2xl font-bold text-gray-900">Welcome!</h1>
+                        <p class="text-gray-600 mt-2">Let's personalize your experience</p>
+                    </div>
+
+                    <!-- Progress Steps -->
+                    <div class="space-y-6">
+                        <!-- Step 1: Welcome -->
+                        <div class="step-item flex items-center" data-step="0">
+                            <div class="step-circle w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-sm font-semibold mr-3">
+                                1
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900">Welcome</h3>
+                                <p class="text-sm text-gray-500">Get started with your journey</p>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Food Preferences -->
+                        <div class="step-item flex items-center" data-step="1">
+                            <div class="step-circle w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center text-sm font-semibold mr-3">
+                                2
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-400">Food Preferences</h3>
+                                <p class="text-sm text-gray-400">Choose your favorite cuisines</p>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Dietary Restrictions -->
+                        <div class="step-item flex items-center" data-step="2">
+                            <div class="step-circle w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center text-sm font-semibold mr-3">
+                                3
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-400">Dietary Needs</h3>
+                                <p class="text-sm text-gray-400">Any dietary restrictions</p>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Health Conditions -->
+                        <div class="step-item flex items-center" data-step="3">
+                            <div class="step-circle w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center text-sm font-semibold mr-3">
+                                4
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-400">Health Profile</h3>
+                                <p class="text-sm text-gray-400">Health considerations</p>
+                            </div>
+                        </div>
+
+                        <!-- Step 5: Location & Budget -->
+                        <div class="step-item flex items-center" data-step="4">
+                            <div class="step-circle w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center text-sm font-semibold mr-3">
+                                5
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-400">Preferences</h3>
+                                <p class="text-sm text-gray-400">Location and budget</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="mt-8">
+                        <div class="flex justify-between text-sm text-gray-600 mb-2">
+                            <span>Progress</span>
+                            <span id="progress-text">20%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div id="progress-bar" class="bg-emerald-600 h-2 rounded-full transition-all duration-300" style="width: 20%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Selected Items Summary -->
+                    <div class="mt-8">
+                        <h4 class="font-semibold text-gray-900 mb-3">Your Selections</h4>
+                        <div id="selected-summary" class="space-y-2 text-sm">
+                            <div class="text-gray-500">Make your choices and they'll appear here</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="flex-1 flex items-center justify-center p-8">
+                <div class="max-w-2xl w-full">
+                    <form asp-action="Save" asp-controller="Preferences" method="post" onsubmit="saveSelections()">
+                        @Html.AntiForgeryToken()
+
+                        <!-- Hidden fields to store selected food type IDs -->
+                        <div id="preserved-selections" style="display: none;"></div>
+
+                        
+
+                        @if (TempData["ErrorMessage"] != null)
+                        {
+                            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
+                                @TempData["ErrorMessage"]
+                            </div>
+                        }
+
+                        @if (TempData["InfoMessage"] != null)
+                        {
+                            <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-lg mb-6">
+                                @TempData["InfoMessage"]
+                            </div>
+                        }
+
+                        <!-- Step 0: Welcome -->
+                        <div id="step-0" class="step-content">
+                            <div class="text-center">
+                                <img src="~/images/Logo.svg" alt="Welcome" class="w-100 h-100 mx-auto p-6 mb-8 rounded-xl">
+                                <h2 class="text-4xl font-bold text-gray-900 mb-4">Welcome to Foodiesaur!</h2>
+                                <p class="text-xl text-gray-600 mb-8">Let's create your personalized food recommendation profile. This will only take a few minutes.</p>
+                                <div class="bg-amber-50 border border-amber-200 rounded-lg p-6 mb-8">
+                                    <h3 class="font-semibold text-amber-800 mb-2">What we'll cover:</h3>
+                                    <ul class="text-amber-700 space-y-1">
+                                        <li>• Your favorite food types and cuisines</li>
+                                        <li>• Any dietary restrictions or preferences</li>
+                                        <li>• Health considerations we should know about</li>
+                                        <li>• Your location and budget preferences</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 1: Food Preferences -->
+                        <div id="step-1" class="step-content hidden">
+                            <div class="text-center mb-8">
+                                <img src="~/images/Likes.png" alt="Food Preferences" class="w-80 h-70 mx-auto mb-8 rounded-xl">
+                                <h2 class="text-3xl font-bold text-gray-900 mb-2">Food Preferences</h2>
+                                <p class="text-gray-600">Select the types of food you enjoy most</p>
+                            </div>
+                            <!-- Food Types Search -->
+                            <div class="w-full mb-4">
+                                <input type="text" id="food-type-search" placeholder="Search food types..." class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" onkeyup="filterFoodTypes()">
+                            </div>
+                            <!-- Food Types Grid -->
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-4" id="food-type-grid">
+                                @for (int i = 0; i < Model.FoodTypes.Count; i++)
+                                {
+                                    <div class="food-type-item flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                        @Html.CheckBoxFor(m => m.FoodTypes[i].IsSelected, new { @class = "mr-3 w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500", onchange = "updateSelections()", data_id = Model.FoodTypes[i].FoodTypeId })
+                                        @Html.HiddenFor(m => m.FoodTypes[i].FoodTypeId)
+                                        @Html.HiddenFor(m => m.FoodTypes[i].Name)
+                                        <label class="text-sm font-medium text-gray-700 cursor-pointer">@Model.FoodTypes[i].Name</label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Dietary Restrictions -->
+                        <div id="step-2" class="step-content hidden">
+                            <div class="text-center mb-8">
+                                <img src="~/images/Curious.png" alt="Dietary Restrictions" class="w-80 h-70 mx-auto mb-4 rounded-xl">
+                                <h2 class="text-3xl font-bold text-gray-900 mb-2">Dietary Restrictions</h2>
+                                <p class="text-gray-600">Tell us about any dietary needs or preferences</p>
+                            </div>
+
+
+                            <!-- Dietary Restrictions -->
+                            <div class="space-y-3 max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-4" id="dietary-restrictions-list">
+                                <!-- None option -->
+                                <div class="dietary-item flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="mr-3 w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500" id="dietary-none" onclick="dietaryNoneToggle()">
+                                        <label class="text-sm font-medium text-gray-700" for="dietary-none">None</label>
+                                    </div>
+                                </div>
+                                @for (int i = 0; i < Model.DietaryRestrictions.Count; i++)
+                                {
+                                    <div class="dietary-item flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                                        <div class="flex items-center">
+                                            @Html.CheckBoxFor(m => m.DietaryRestrictions[i].IsSelected, new { @class = "mr-3 w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 dietary-box", onchange = "updateSelections(); toggleImportanceLevel(this); dietaryBoxToggle(this);", id = "dietary-@i" })
+                                            @Html.HiddenFor(m => m.DietaryRestrictions[i].DietaryRestrictionId)
+                                            @Html.HiddenFor(m => m.DietaryRestrictions[i].Name)
+                                            <label class="text-sm font-medium text-gray-700" for="dietary-@i">@Model.DietaryRestrictions[i].Name</label>
+                                        </div>
+                                        <div class="importance-level hidden">
+                                            <label class="text-xs text-gray-500 mr-2">Importance (1-10):</label>
+                                            <select asp-for="@Model.DietaryRestrictions[i].ImportanceLevel" class="text-sm border border-gray-300 rounded px-2 py-1">
+                                                @for (int j = 1; j <= 10; j++)
+                                                {
+                                                    <option value="@j">@j</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Health Conditions -->
+                        <div id="step-3" class="step-content hidden">
+                            <div class="text-center mb-8">
+                                <img src="~/images/Shock.png" alt="Health Conditions" class="w-80 h-70 mx-auto mb-4 rounded-xl">
+                                <h2 class="text-3xl font-bold text-gray-900 mb-2">Health Profile</h2>
+                                <p class="text-gray-600">Help us understand any health considerations</p>
+                            </div>
+
+
+                            <!-- Health Conditions -->
+                            <div class="space-y-3 max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-4" id="health-conditions-list">
+                                <!-- None option -->
+                                <div class="health-item flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="mr-3 w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500" id="health-none" onclick="healthNoneToggle()">
+                                        <label class="text-sm font-medium text-gray-700" for="health-none">None</label>
+                                    </div>
+                                </div>
+                                @for (int i = 0; i < Model.HealthConditions.Count; i++)
+                                {
+                                    <div class="health-item flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                                        <div class="flex items-center">
+                                            @Html.CheckBoxFor(m => m.HealthConditions[i].IsSelected, new { @class = "mr-3 w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 health-box", onchange = "updateSelections(); toggleSeverityLevel(this); healthBoxToggle(this);", id = "health-@i" })
+                                            @Html.HiddenFor(m => m.HealthConditions[i].HealthConditionId)
+                                            @Html.HiddenFor(m => m.HealthConditions[i].Name)
+                                            <label class="text-sm font-medium text-gray-700" for="health-@i">@Model.HealthConditions[i].Name</label>
+                                        </div>
+                                        <div class="severity-level hidden">
+                                            <label class="text-xs text-gray-500 mr-2">Severity (1-10):</label>
+                                            <select asp-for="@Model.HealthConditions[i].SeverityLevel" class="text-sm border border-gray-300 rounded px-2 py-1">
+                                                @for (int j = 1; j <= 10; j++)
+                                                {
+                                                    <option value="@j">@j</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Location & Budget -->
+                        <div id="step-4" class="step-content hidden">
+                            <div class="text-center mb-8">
+                                <div class="text-center mb-8">
+                                    <img src="~/images/Group 2.png" alt="Health Conditions" class="w-80 h-70 mx-auto mb-4 rounded-xl">
+                                </div>
+                                <h2 class="text-3xl font-bold text-gray-900 mb-2">Final Preferences</h2>
+                                <p class="text-gray-600">Let us know your location and budget preferences</p>
+                            </div>
+
+                            <div class="space-y-6">
+                                <!-- Location -->
+                                <div>
+                                    <label class="block text-lg font-semibold text-gray-900 mb-3">
+                                        Preferred Location
+                                    </label>
+                                    <input asp-for="PreferredLocation" type="text" placeholder="e.g. Downtown, Lanang, Davao City"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" />
+                                    <p class="text-sm text-gray-500 mt-2">This helps us recommend nearby restaurants</p>
+                                </div>
+
+                                <!-- Budget -->
+                                <div>
+                                    <label class="block text-lg font-semibold text-gray-900 mb-3">
+                                        Budget Range
+                                    </label>
+                                    <select asp-for="PriceRange" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                                        <option value="">Select your preferred price range</option>
+                                        <option value="Budget">Budget-Friendly (₱100-200)</option>
+                                        <option value="Mid-range">Mid-Range (₱200-500)</option>
+                                        <option value="High-end">Premium (₱500+)</option>
+                                    </select>
+                                    <p class="text-sm text-gray-500 mt-2">We'll prioritize recommendations within your budget</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Navigation Buttons -->
+                        <div class="flex justify-between mt-8">
+                            <button type="button" id="prev-btn" class="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors hidden">
+                                Previous
+                            </button>
+                            <div class="flex-1"></div>
+                            <button type="button" id="next-btn" class="px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors">
+                                Get Started
+                            </button>
+                            <button type="submit" id="complete-btn" class="px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors hidden">
+                                Complete Setup
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // Client-side search removed; rendering handled by server-side model
+
+            let currentStep = 0;
+            const totalSteps = 5;
+
+            // Initialize
+            document.addEventListener('DOMContentLoaded', function() {
+                // Start at Welcome slide
+                currentStep = 0;
+
+                updateStepDisplay();
+                updateSelections();
+                // No persistence across reloads
+            });
+
+            // Navigation
+            document.getElementById('next-btn').addEventListener('click', function() {
+                if (currentStep < totalSteps - 1) {
+                    currentStep++;
+                    updateStepDisplay();
+                }
+            });
+
+            document.getElementById('prev-btn').addEventListener('click', function() {
+                if (currentStep > 0) {
+                    currentStep--;
+                    updateStepDisplay();
+                }
+            });
+
+            function updateStepDisplay() {
+                // Hide all steps
+                document.querySelectorAll('.step-content').forEach(step => {
+                    step.classList.add('hidden');
+                });
+
+                // Show current step
+                document.getElementById(`step-${currentStep}`).classList.remove('hidden');
+
+                // Update progress bar
+                const progress = ((currentStep + 1) / totalSteps) * 100;
+                document.getElementById('progress-bar').style.width = progress + '%';
+                document.getElementById('progress-text').textContent = Math.round(progress) + '%';
+
+                // Update sidebar steps
+                document.querySelectorAll('.step-item').forEach((item, index) => {
+                    const circle = item.querySelector('.step-circle');
+                    const title = item.querySelector('h3');
+                    const description = item.querySelector('p');
+
+                    if (index <= currentStep) {
+                        circle.classList.remove('bg-gray-300', 'text-gray-600');
+                        circle.classList.add('bg-emerald-600', 'text-white');
+                        title.classList.remove('text-gray-400');
+                        title.classList.add('text-gray-900');
+                        description.classList.remove('text-gray-400');
+                        description.classList.add('text-gray-500');
+                    } else {
+                        circle.classList.remove('bg-emerald-600', 'text-white');
+                        circle.classList.add('bg-gray-300', 'text-gray-600');
+                        title.classList.remove('text-gray-900');
+                        title.classList.add('text-gray-400');
+                        description.classList.remove('text-gray-500');
+                        description.classList.add('text-gray-400');
+                    }
+                });
+
+                // Update navigation buttons
+                const prevBtn = document.getElementById('prev-btn');
+                const nextBtn = document.getElementById('next-btn');
+                const completeBtn = document.getElementById('complete-btn');
+
+                if (currentStep === 0) {
+                    prevBtn.classList.add('hidden');
+                    nextBtn.textContent = 'Get Started';
+                } else {
+                    prevBtn.classList.remove('hidden');
+                    nextBtn.textContent = 'Continue';
+                }
+
+                if (currentStep === totalSteps - 1) {
+                    nextBtn.classList.add('hidden');
+                    completeBtn.classList.remove('hidden');
+                } else {
+                    nextBtn.classList.remove('hidden');
+                    completeBtn.classList.add('hidden');
+                }
+            }
+
+
+                // Toggle importance/severity levels
+            function toggleImportanceLevel(checkbox) {
+                const importanceDiv = checkbox.closest('.dietary-item').querySelector('.importance-level');
+                if (checkbox.checked) {
+                    importanceDiv.classList.remove('hidden');
+                } else {
+                    importanceDiv.classList.add('hidden');
+                }
+            }
+
+            function toggleSeverityLevel(checkbox) {
+                const severityDiv = checkbox.closest('.health-item').querySelector('.severity-level');
+                if (checkbox.checked) {
+                    severityDiv.classList.remove('hidden');
+                } else {
+                    severityDiv.classList.add('hidden');
+                }
+            }
+
+
+
+            // Update selections summary
+            function updateSelections() {
+                const summary = document.getElementById('selected-summary');
+                const selections = [];
+
+                // Food types
+                document.querySelectorAll('.food-type-item input[type="checkbox"]:checked').forEach(checkbox => {
+                    const label = checkbox.closest('.food-type-item').querySelector('label').textContent;
+                    selections.push(`<span class="inline-block bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded-full">${label}</span>`);
+                });
+
+                // Dietary restrictions
+                const drNone = document.getElementById('dietary-none');
+                if (drNone && drNone.checked) {
+                    selections.push(`<span class="inline-block bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded-full">None</span>`);
+                } else {
+                    document.querySelectorAll('.dietary-item input.dietary-box[type="checkbox"]:checked').forEach(checkbox => {
+                        const label = checkbox.closest('.dietary-item').querySelector('label').textContent;
+                        selections.push(`<span class="inline-block bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded-full">${label}</span>`);
+                    });
+                }
+
+                // Health conditions
+                const hcNone = document.getElementById('health-none');
+                if (hcNone && hcNone.checked) {
+                    selections.push(`<span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">None</span>`);
+                } else {
+                    document.querySelectorAll('.health-item input.health-box[type="checkbox"]:checked').forEach(checkbox => {
+                        const label = checkbox.closest('.health-item').querySelector('label').textContent;
+                        selections.push(`<span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">${label}</span>`);
+                    });
+                }
+
+                if (selections.length > 0) {
+                    summary.innerHTML = selections.join(' ');
+                } else {
+                    summary.innerHTML = '<div class="text-gray-500">Make your choices and they\'ll appear here</div>';
+                }
+
+                // Persist selected food type IDs into hidden inputs for posting
+                saveSelections();
+            }
+
+            // None logic for desktop - dietary restrictions & health
+            function dietaryNoneToggle() {
+                const dietaryNone = document.getElementById('dietary-none');
+                const boxes = document.querySelectorAll('.dietary-box');
+                if (dietaryNone.checked) {
+                    boxes.forEach(b => { b.checked = false; });
+                }
+                updateSelections();
+            }
+            function dietaryBoxToggle(box) {
+                if (box.checked) {
+                    document.getElementById('dietary-none').checked = false;
+                }
+                updateSelections();
+            }
+            function healthNoneToggle() {
+                const healthNone = document.getElementById('health-none');
+                const boxes = document.querySelectorAll('.health-box');
+                if (healthNone.checked) {
+                    boxes.forEach(b => { b.checked = false; });
+                }
+                updateSelections();
+            }
+            function healthBoxToggle(box) {
+                if (box.checked) {
+                    document.getElementById('health-none').checked = false;
+                }
+                updateSelections();
+            }
+
+            // Persist selected food type IDs into hidden inputs (desktop + mobile)
+            function saveSelections() {
+                // Desktop container
+                const desktopContainer = document.getElementById('preserved-selections');
+                if (desktopContainer) {
+                    desktopContainer.innerHTML = '';
+                    document.querySelectorAll('.food-type-item input[type="checkbox"]:checked').forEach(checkbox => {
+                        let id = checkbox.getAttribute('data-id');
+                        if (!id) {
+                            const hiddenId = checkbox.closest('.food-type-item').querySelector('input[type="hidden"][name*="FoodTypeId"]');
+                            if (hiddenId) id = hiddenId.value;
+                        }
+                        if (id) {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = 'SelectedFoodTypeIds';
+                            input.value = id;
+                            desktopContainer.appendChild(input);
+                        }
+                    });
+                }
+
+                // Mobile container
+                const mobileContainer = document.getElementById('mobile-preserved-selections');
+                if (mobileContainer) {
+                    mobileContainer.innerHTML = '';
+                    document.querySelectorAll('.mobile-food-item input[type="checkbox"]:checked').forEach(checkbox => {
+                        let id = checkbox.getAttribute('data-id');
+                        if (!id) {
+                            const hiddenId = checkbox.closest('.mobile-food-item').querySelector('input[type="hidden"][name*="FoodTypeId"]');
+                            if (hiddenId) id = hiddenId.value;
+                        }
+                        if (id) {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = 'SelectedFoodTypeIds';
+                            input.value = id;
+                            mobileContainer.appendChild(input);
+                        }
+                    });
+                }
+            }
+
+            // Search removed
+
+            // No persistence listeners
+
+            // performSearch removed
+
+            // Pagination removed
+
+            // Clear search functionality
+            // clearSearch removed
+
+            // No persistence helpers
+
+            // Desktop food type search functionality
+            function filterFoodTypes() {
+                const searchInput = document.getElementById('food-type-search');
+                const term = searchInput.value.toLowerCase();
+                const items = document.querySelectorAll('.food-type-item');
+                items.forEach(it => {
+                    const label = it.querySelector('label').textContent.toLowerCase();
+                    it.style.display = !term || label.includes(term) ? 'flex' : 'none';
+                });
+            }
+        </script>
+    </body>
+    </html>
+}
+else
+{
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>@ViewData["Title"] - Capstone</title>
+        <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/Capstone.styles.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/output.css" asp-append-version="true" />
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    </head>
+
+    <body class="bg-gradient-to-br from-emerald-50 via-white to-amber-50 min-h-screen">
+        <div class="min-h-screen flex flex-col">
+            <!-- Mobile Progress Header -->
+            <div class="bg-white shadow-sm border-b border-gray-100 p-4">
+                <div class="text-center mb-3">
+                    <h1 class="text-lg font-bold text-gray-900">Welcome to Nomsaur!</h1>
+                    <p class="text-sm text-gray-600">Complete your profile</p>
+                </div>
+                <div class="flex justify-between text-xs text-gray-600 mb-2">
+                    <span>Progress</span>
+                    <span id="mobile-progress-text">20%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="mobile-progress-bar" class="bg-emerald-600 h-2 rounded-full transition-all duration-300" style="width: 20%"></div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="flex-1 flex items-center justify-center p-4">
+                <form asp-action="Save" asp-controller="Preferences" method="post" class="w-full max-w-sm" onsubmit="saveSelections()">
+                    @Html.AntiForgeryToken()
+                    
+                    <!-- Hidden fields to store all preserved selections -->
+                    <div id="mobile-preserved-selections" style="display: none;"></div>
+                    
+                    <!-- Frame -->
+                    <div id="mobile-frame" class="relative w-full overflow-hidden">
+                        <!-- slides naka wrap -->
+                        <div id="mobile-slides" class="flex transition-transform duration-500 ease-out">
+                            @if (TempData["ErrorMessage"] != null)
+                            {
+                                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                                    @TempData["ErrorMessage"]
+                                </div>
+                            }
+
+                            @if (TempData["InfoMessage"] != null)
+                            {
+                                <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-4">
+                                    @TempData["InfoMessage"]
+                                </div>
+                            }
+
+                            <!-- slide0 - Welcome -->
+                            <section class="w-full flex-shrink-0 flex flex-col items-center justify-center px-6 py-6">
+                                <img src="~/images/Logo.svg" alt="Welcome" class="w-80 h-80 mx-auto p-6 mb-8 rounded-xl">
+                                <h2 class="text-xl font-bold text-gray-900 mb-3 text-center">Let's Get Started!</h2>
+                                <p class="text-gray-600 text-center mb-6 text-sm">We'll help you create a personalized food recommendation profile in just a few steps.</p>
+                                
+                                <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 w-full">
+                                    <h3 class="font-semibold text-amber-800 mb-2 text-sm">What we'll ask:</h3>
+                                    <ul class="text-amber-700 space-y-1 text-xs">
+                                        <li>• Your favorite food types</li>
+                                        <li>• Dietary restrictions</li>
+                                        <li>• Health considerations</li>
+                                        <li>• Location and budget</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="flex justify-center w-full">
+                                    <button type="button" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-8 py-3 rounded-xl" onclick="nextMobileStep()">
+                                        Get Started
+                                    </button>
+                                </div>
+                            </section>
+
+                            <!-- slide1 - Food Preferences -->
+                            <section class="w-full flex-shrink-0 flex flex-col items-center justify-center px-6 py-6">
+                                <img src="~/images/Likes.png" alt="Food" class="w-75 h-60 mx-auto mb-6 rounded-xl">
+                                <h2 class="text-lg font-semibold text-gray-700 mb-2 text-center">Food Preferences</h2>
+                                <p class="text-gray-600 text-center mb-4 text-sm">Select your favorite foods:</p>
+                                
+                                <!-- Search Input -->
+                                <div class="w-full mb-4">
+                                    <input type="text" id="mobile-food-search" placeholder="Search food types..." 
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                           onkeyup="performMobileFoodSearch()">
+                                </div>
+                                
+                                <div class="w-full max-h-48 overflow-y-auto mb-4 border border-gray-200 rounded-lg p-3">
+                                    @for (int i = 0; i < Model.FoodTypes.Count; i++)
+                                    {
+                                        <div class="mobile-food-item flex items-center mb-2 p-2 border border-gray-100 rounded hover:bg-gray-50">
+                                            @Html.CheckBoxFor(m => m.FoodTypes[i].IsSelected, new { @class = "mr-2 w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500", onchange = "updateMobileSelections()", data_id = Model.FoodTypes[i].FoodTypeId })
+                                            @Html.HiddenFor(m => m.FoodTypes[i].FoodTypeId)
+                                            @Html.HiddenFor(m => m.FoodTypes[i].Name)
+                                            <label class="text-sm text-gray-600">@Model.FoodTypes[i].Name</label>
+                                        </div>
+                                    }
+                                </div>
+
+                                <!-- Mobile Pagination removed -->
+                                
+                                <div class="flex justify-between w-full">
+                                    <button type="button" class="text-gray-500 hover:underline" onclick="prevMobileStep()">Back</button>
+                                    <button type="button" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-2 rounded-xl" onclick="nextMobileStep()">Next</button>
+                                </div>
+                            </section>
+
+                            <!-- slide2 - Dietary Restrictions -->
+                            <section class="w-full flex-shrink-0 flex flex-col items-center justify-center px-6 py-6">
+                                <img src="~/images/Curious.png" alt="Dietary Restrictions" class="w-70 h-60 mx-auto mb-6 rounded-xl">
+                                <h2 class="text-lg font-semibold text-gray-700 mb-2 text-center">Dietary Restrictions</h2>
+                                <p class="text-gray-600 text-center mb-4 text-sm">Select any that apply:</p>
+                                
+                                
+                                <div class="w-full max-h-48 overflow-y-auto mb-4 border border-gray-200 rounded-lg p-3">
+                                    @for (int i = 0; i < Model.DietaryRestrictions.Count; i++)
+                                    {
+                                        <div class="mobile-dietary-item mb-3 p-2 border border-gray-100 rounded">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center">
+                                                    @Html.CheckBoxFor(m => m.DietaryRestrictions[i].IsSelected, new { @class = "mr-2 w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500", onchange = "updateMobileSelections(); toggleMobileImportance(this)" })
+                                                    @Html.HiddenFor(m => m.DietaryRestrictions[i].DietaryRestrictionId)
+                                                    @Html.HiddenFor(m => m.DietaryRestrictions[i].Name)
+                                                    <label class="text-sm text-gray-600">@Model.DietaryRestrictions[i].Name</label>
+                                                </div>
+                                                <div class="mobile-importance-level hidden" style="display: none;">
+                                                    <label class="text-xs text-gray-500 mr-2">Importance (1-10):</label>
+                                                    <select asp-for="@Model.DietaryRestrictions[i].ImportanceLevel" class="text-sm border border-gray-300 rounded px-2 py-1 bg-white">
+                                                        @for (int j = 1; j <= 10; j++)
+                                                        {
+                                                            <option value="@j">@j</option>
+                                                        }
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                                
+                                <div class="flex justify-between w-full">
+                                    <button type="button" class="text-gray-500 hover:underline" onclick="prevMobileStep()">Back</button>
+                                    <button type="button" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-2 rounded-xl" onclick="nextMobileStep()">Next</button>
+                                </div>
+                            </section>
+
+                            <!-- slide3 - Health Conditions -->
+                            <section class="w-full flex-shrink-0 flex flex-col items-center justify-center px-6 py-6">
+                                <img src="~/images/Shock.png" alt="Health" class="w-70 h-60 mx-auto mb-6 rounded-xl">
+                                <h2 class="text-lg font-semibold text-gray-700 mb-2 text-center">Health Conditions</h2>
+                                <p class="text-gray-600 text-center mb-4 text-sm">Select any that apply:</p>
+                                
+                                
+                                <div class="w-full max-h-48 overflow-y-auto mb-4 border border-gray-200 rounded-lg p-3">
+                                    @for (int i = 0; i < Model.HealthConditions.Count; i++)
+                                    {
+                                        <div class="mobile-health-item mb-3 p-2 border border-gray-100 rounded">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center">
+                                                    @Html.CheckBoxFor(m => m.HealthConditions[i].IsSelected, new { @class = "mr-2 w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500", onchange = "updateMobileSelections(); toggleMobileSeverity(this)" })
+                                                    @Html.HiddenFor(m => m.HealthConditions[i].HealthConditionId)
+                                                    @Html.HiddenFor(m => m.HealthConditions[i].Name)
+                                                    <label class="text-sm text-gray-600">@Model.HealthConditions[i].Name</label>
+                                                </div>
+                                                <div class="mobile-severity-level hidden" style="display: none;">
+                                                    <label class="text-xs text-gray-500 mr-2">Severity (1-10):</label>
+                                                    <select asp-for="@Model.HealthConditions[i].SeverityLevel" class="text-sm border border-gray-300 rounded px-2 py-1 bg-white">
+                                                        @for (int j = 1; j <= 10; j++)
+                                                        {
+                                                            <option value="@j">@j</option>
+                                                        }
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                                
+                                <div class="flex justify-between w-full">
+                                    <button type="button" class="text-gray-500 hover:underline" onclick="prevMobileStep()">Back</button>
+                                    <button type="button" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-2 rounded-xl" onclick="nextMobileStep()">Next</button>
+                                </div>
+                            </section>
+
+                            <!-- slide4 - Location & Budget --> 
+                            <section class="w-full flex-shrink-0 flex flex-col items-center justify-center px-6 py-6">
+                                <img src="~/images/Group 2.png" alt="Health Conditions" class="w-70 h-60 mx-auto mb-4 rounded-xl">
+                                <h2 class="text-lg font-semibold text-gray-700 mb-2 text-center">Final Preferences</h2>
+                                <p class="text-gray-600 text-center mb-4 text-sm">Location and budget preferences:</p>
+                                
+                                <div class="w-full space-y-4 mb-6">
+                                    <!-- Location -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            Preferred Location
+                                        </label>
+                                        <input asp-for="PreferredLocation" type="text" placeholder="e.g. Downtown, Lanang"
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" />
+                                    </div>
+
+                                    <!-- Budget -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            Budget Range
+                                        </label>
+                                        <select asp-for="PriceRange" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                                            <option value="">Select price range</option>
+                                            <option value="Budget">Budget (₱100-200)</option>
+                                            <option value="Mid-range">Mid-range (₱200-500)</option>
+                                            <option value="High-end">Premium (₱500+)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-between w-full">
+                                    <button type="button" class="text-gray-500 hover:underline" onclick="prevMobileStep()">Back</button>
+                                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-2 rounded-xl">Complete Setup</button>
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            
+        </div>
+
+        <script>
+            // Mobile specific functionality
+            let mobileCurrent = 0;
+            const mobileTotal = 5;
+
+            // Initialize mobile
+            document.addEventListener('DOMContentLoaded', function() {
+                mobileCurrent = 0;
+                
+                updateMobileDisplay();
+                updateMobileSelections();
+                
+                // No persistence across reloads
+            });
+
+            function nextMobileStep() {
+                if (mobileCurrent < mobileTotal - 1) {
+                    mobileCurrent++;
+                    updateMobileDisplay();
+                }
+            }
+
+            function prevMobileStep() {
+                if (mobileCurrent > 0) {
+                    mobileCurrent--;
+                    updateMobileDisplay();
+                }
+            }
+
+            function updateMobileDisplay() {
+                const frame = document.getElementById('mobile-frame');
+                const slides = document.getElementById('mobile-slides');
+                
+                // Calculate and apply transform
+                const w = frame.clientWidth;
+                slides.style.transform = `translateX(-${mobileCurrent * w}px)`;
+
+                // Update progress
+                const progress = ((mobileCurrent + 1) / mobileTotal) * 100;
+                document.getElementById('mobile-progress-bar').style.width = progress + '%';
+                document.getElementById('mobile-progress-text').textContent = Math.round(progress) + '%';
+            }
+
+
+
+            function toggleMobileImportance(checkbox) {
+                const importanceDiv = checkbox.closest('.mobile-dietary-item').querySelector('.mobile-importance-level');
+                console.log('Toggle importance called, checkbox checked:', checkbox.checked);
+                console.log('Importance div found:', importanceDiv);
+                
+                if (checkbox.checked) {
+                    importanceDiv.classList.remove('hidden');
+                    importanceDiv.style.display = 'block';
+                } else {
+                    importanceDiv.classList.add('hidden');
+                    importanceDiv.style.display = 'none';
+                }
+                saveMobileSelections(); // Save selections when toggled
+            }
+
+            function toggleMobileSeverity(checkbox) {
+                const severityDiv = checkbox.closest('.mobile-health-item').querySelector('.mobile-severity-level');
+                console.log('Toggle severity called, checkbox checked:', checkbox.checked);
+                console.log('Severity div found:', severityDiv);
+                
+                if (checkbox.checked) {
+                    severityDiv.classList.remove('hidden');
+                    severityDiv.style.display = 'block';
+                } else {
+                    severityDiv.classList.add('hidden');
+                    severityDiv.style.display = 'none';
+                }
+                saveMobileSelections(); // Save selections when toggled
+            }
+
+            function updateMobileSelections() {
+                // This function can be expanded to show selected items in mobile view
+                // For now, it's just a placeholder for consistency
+                saveMobileSelections(); // Save selections when updated
+            }
+
+            // Mobile version of saveSelections function
+            function saveMobileSelections() {
+                const mobileContainer = document.getElementById('mobile-preserved-selections');
+                if (mobileContainer) {
+                    mobileContainer.innerHTML = '';
+                    document.querySelectorAll('.mobile-food-item input[type="checkbox"]:checked').forEach(checkbox => {
+                        let id = checkbox.getAttribute('data-id');
+                        if (!id) {
+                            const hiddenId = checkbox.closest('.mobile-food-item').querySelector('input[type="hidden"][name*="FoodTypeId"]');
+                            if (hiddenId) id = hiddenId.value;
+                        }
+                        if (id) {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = 'SelectedFoodTypeIds';
+                            input.value = id;
+                            mobileContainer.appendChild(input);
+                        }
+                    });
+                }
+            }
+
+            // Mobile food search functionality
+            function performMobileFoodSearch() {
+                const searchTerm = document.getElementById('mobile-food-search').value.toLowerCase();
+                const foodItems = document.querySelectorAll('.mobile-food-item');
+                
+                foodItems.forEach(item => {
+                    const label = item.querySelector('label').textContent.toLowerCase();
+                    if (label.includes(searchTerm)) {
+                        item.style.display = 'flex';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            }
+
+            // Mobile pagination removed
+
+            // Mobile clear search functionality
+            // clearMobileSearch removed
+
+            // Handle window resize
+            window.addEventListener('resize', updateMobileDisplay);
+        </script>
+    </body>
+    </html>
+}

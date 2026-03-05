@@ -1,0 +1,100 @@
+@{
+    ViewData["Title"] = "Restaurant History";
+    var placeId = ViewBag.PlaceId as string;
+    var history = ViewBag.History as List<Capstone.Models.NomsaurModel.RestaurantVersion> ?? new List<Capstone.Models.NomsaurModel.RestaurantVersion>();
+    var currentVersion = ViewBag.CurrentVersion as Capstone.Models.NomsaurModel.RestaurantVersion;
+    var owner = ViewBag.Owner as Capstone.Models.NomsaurModel.RestaurantOwner;
+}
+
+<div class="min-h-screen bg-gradient-to-br from-[#FFF5E1] to-white py-8 px-4">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h1 class="text-3xl font-bold text-[#47682C]">Version History</h1>
+                <a href="@Url.Action("Details", "Restaurant", new { placeId })" 
+                   class="px-4 py-2 bg-[#47682C] text-white rounded-lg hover:bg-[#3a5424] transition">
+                    Back to Details
+                </a>
+            </div>
+        </div>
+
+        @if (history.Any())
+        {
+            <div class="space-y-4">
+                @foreach (var version in history)
+                {
+                    <div class="bg-white rounded-2xl shadow-lg p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-3">
+                                <span class="px-3 py-1 bg-[#47682C] text-white rounded-full font-semibold">
+                                    Version @version.VersionNumber
+                                </span>
+                                <span class="px-3 py-1 rounded-full text-sm font-semibold
+                                    @(version.Status == "Current" ? "bg-green-100 text-green-700" : "")
+                                    @(version.Status == "Pending" ? "bg-yellow-100 text-yellow-700" : "")
+                                    @(version.Status == "Rejected" ? "bg-red-100 text-red-700" : "")
+                                    @(version.Status == "Historical" ? "bg-gray-100 text-gray-700" : "")">
+                                    @version.Status
+                                </span>
+                                @if (version.IsCurrent)
+                                {
+                                    <span class="px-3 py-1 bg-[#F7B32B] text-[#47682C] rounded-full text-sm font-semibold">
+                                        Current
+                                    </span>
+                                }
+                            </div>
+                            <span class="text-sm text-gray-500">
+                                @version.CreatedAt.ToString("MMMM dd, yyyy HH:mm")
+                            </span>
+                        </div>
+
+                        <div class="space-y-2 mb-4">
+                            <p><span class="font-semibold text-[#47682C]">Name:</span> @version.Name</p>
+                            @if (!string.IsNullOrEmpty(version.Address))
+                            {
+                                <p><span class="font-semibold text-[#47682C]">Address:</span> @version.Address</p>
+                            }
+                            @if (!string.IsNullOrEmpty(version.CuisineType))
+                            {
+                                <p><span class="font-semibold text-[#47682C]">Cuisine:</span> @version.CuisineType</p>
+                            }
+                            @if (!string.IsNullOrEmpty(version.PriceRange))
+                            {
+                                <p><span class="font-semibold text-[#47682C]">Price Range:</span> @version.PriceRange</p>
+                            }
+                        </div>
+
+                        <div class="border-t border-gray-200 pt-4 mt-4">
+                            <p class="text-sm text-gray-600">
+                                <span class="font-semibold">Created by:</span> @version.CreatedByUser?.Name
+                            </p>
+                            @if (version.ApprovedByUser != null)
+                            {
+                                <p class="text-sm text-gray-600">
+                                    <span class="font-semibold">Approved by:</span> @version.ApprovedByUser.Name
+                                    @if (version.ApprovedAt.HasValue)
+                                    {
+                                        <span>on @version.ApprovedAt.Value.ToString("MMMM dd, yyyy")</span>
+                                    }
+                                </p>
+                            }
+                            @if (!string.IsNullOrEmpty(version.RejectionReason))
+                            {
+                                <p class="text-sm text-red-600 mt-2">
+                                    <span class="font-semibold">Rejection reason:</span> @version.RejectionReason
+                                </p>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="bg-white rounded-2xl shadow-lg p-6 text-center">
+                <p class="text-gray-500">No version history available.</p>
+            </div>
+        }
+    </div>
+</div>
+

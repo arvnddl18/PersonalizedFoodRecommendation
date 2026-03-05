@@ -1,0 +1,255 @@
+// FoodieSaur - System Data Flow Diagram
+// This diagram shows the data flow and system architecture with arrows
+// Note: DBdiagram format adapted for system architecture visualization
+// Arrows show data flow direction between components
+
+// ============================================
+// EXTERNAL SYSTEMS & INTERFACES
+// ============================================
+
+Table External_GoogleMapsAPI {
+  Id int [pk, increment]
+  InterfaceType varchar(50) [note: 'REST API']
+  Endpoints varchar(500) [note: 'Places API, Geocoding API, Directions API']
+  Authentication varchar(100) [note: 'API Key']
+  DataFlow varchar(200) [note: 'Bidirectional - Request/Response']
+  Purpose varchar(500) [note: 'Restaurant search, location data, place details, maps rendering']
+}
+
+Table External_DialogflowAPI {
+  Id int [pk, increment]
+  InterfaceType varchar(50) [note: 'gRPC/REST API']
+  Endpoints varchar(500) [note: 'DetectIntent, Sessions API']
+  Authentication varchar(100) [note: 'Service Account JSON']
+  DataFlow varchar(200) [note: 'Bidirectional - User messages to Dialogflow, responses back']
+  Purpose varchar(500) [note: 'Natural language processing, intent detection, entity extraction']
+}
+
+Table External_GoogleOAuth {
+  Id int [pk, increment]
+  InterfaceType varchar(50) [note: 'OAuth 2.0']
+  Endpoints varchar(500) [note: 'Authorization endpoint, Token endpoint']
+  Authentication varchar(100) [note: 'Client ID & Secret']
+  DataFlow varchar(200) [note: 'Authorization flow - Redirect to Google, callback with token']
+  Purpose varchar(500) [note: 'User authentication via Google account']
+}
+
+Table External_FacebookOAuth {
+  Id int [pk, increment]
+  InterfaceType varchar(50) [note: 'OAuth 2.0']
+  Endpoints varchar(500) [note: 'Authorization endpoint, Token endpoint']
+  Authentication varchar(100) [note: 'App ID & Secret']
+  DataFlow varchar(200) [note: 'Authorization flow - Redirect to Facebook, callback with token']
+  Purpose varchar(500) [note: 'User authentication via Facebook account']
+}
+
+Table External_ScrapingBeeAPI {
+  Id int [pk, increment]
+  InterfaceType varchar(50) [note: 'REST API']
+  Endpoints varchar(500) [note: 'Web scraping endpoint']
+  Authentication varchar(100) [note: 'API Key']
+  DataFlow varchar(200) [note: 'Unidirectional - Outbound requests']
+  Purpose varchar(500) [note: 'Web scraping for restaurant information']
+}
+
+Table External_SQLServerDatabase {
+  Id int [pk, increment]
+  InterfaceType varchar(50) [note: 'SQL Database Connection']
+  Protocol varchar(50) [note: 'TDS (Tabular Data Stream)']
+  Authentication varchar(100) [note: 'SQL Server Authentication']
+  DataFlow varchar(200) [note: 'Bidirectional - CRUD operations']
+  Purpose varchar(500) [note: 'Persistent data storage for all application data']
+}
+
+// ============================================
+// APPLICATION LAYERS
+// ============================================
+
+Table PresentationLayer {
+  Id int [pk, increment]
+  Component varchar(100) [note: 'Razor Views, JavaScript, CSS']
+  Technologies varchar(200) [note: 'ASP.NET Core MVC, TailwindCSS, jQuery']
+  DataFlow varchar(200) [note: 'User interactions → Controllers → Views']
+  Responsibilities varchar(500) [note: 'UI rendering, user input handling, Google Maps display, chat interface']
+  ControllerLayerId int [ref: > ControllerLayer.Id, note: 'Sends HTTP requests to']
+}
+
+Table ControllerLayer {
+  Id int [pk, increment]
+  Component varchar(100) [note: 'MVC Controllers']
+  Technologies varchar(200) [note: 'ASP.NET Core Controllers']
+  DataFlow varchar(200) [note: 'HTTP requests → Business logic → Responses']
+  Responsibilities varchar(500) [note: 'Request routing, session management, authentication, API endpoints']
+  Controllers varchar(1000) [note: 'HomeController, ChatController, AuthController, PreferencesController, FavoritesController, AccountController, WebScrapingController']
+  ServiceLayerId int [ref: > ServiceLayer.Id, note: 'Calls services for business logic']
+  PresentationLayerId int [ref: < PresentationLayer.Id, note: 'Receives requests from']
+}
+
+Table ServiceLayer {
+  Id int [pk, increment]
+  Component varchar(100) [note: 'Business Logic Services']
+  Technologies varchar(200) [note: 'C# Services']
+  DataFlow varchar(200) [note: 'Controller calls → External APIs → Database → Results']
+  Responsibilities varchar(500) [note: 'Dialogflow integration, behavior analysis, recommendation engine, user behavior tracking']
+  Services varchar(1000) [note: 'DialogflowService, UserBehaviorService, ScrapingBeeService, WitAIService']
+  ControllerLayerId int [ref: < ControllerLayer.Id, note: 'Called by controllers']
+  DataAccessLayerId int [ref: > DataAccessLayer.Id, note: 'Queries database through']
+  DialogflowAPIId int [ref: > External_DialogflowAPI.Id, note: 'Calls Dialogflow API']
+  GoogleMapsAPIId int [ref: > External_GoogleMapsAPI.Id, note: 'Calls Google Maps API']
+  ScrapingBeeAPIId int [ref: > External_ScrapingBeeAPI.Id, note: 'Calls ScrapingBee API']
+}
+
+Table DataAccessLayer {
+  Id int [pk, increment]
+  Component varchar(100) [note: 'Entity Framework Core']
+  Technologies varchar(200) [note: 'EF Core, SQL Server Provider']
+  DataFlow varchar(200) [note: 'LINQ queries → SQL → Database → Results']
+  Responsibilities varchar(500) [note: 'Database operations, entity mapping, migrations, data persistence']
+  DbContext varchar(100) [note: 'AppDbContext']
+  ServiceLayerId int [ref: < ServiceLayer.Id, note: 'Called by services']
+  DatabaseId int [ref: > External_SQLServerDatabase.Id, note: 'Connects to SQL Server']
+}
+
+// ============================================
+// DATA FLOW PATTERNS (with flow connections)
+// ============================================
+
+Table DataFlow_UserAuthentication {
+  Id int [pk, increment]
+  Step1 varchar(200) [note: 'User submits credentials/OAuth']
+  Step2 varchar(200) [note: 'AuthController validates']
+  Step3 varchar(200) [note: 'OAuth: Redirect to provider']
+  Step4 varchar(200) [note: 'Provider callback with token']
+  Step5 varchar(200) [note: 'Create/update User in database']
+  Step6 varchar(200) [note: 'Create session, redirect to Preferences/Chat']
+  PresentationLayerId int [ref: > PresentationLayer.Id, note: 'Flow starts from']
+  ControllerLayerId int [ref: > ControllerLayer.Id, note: 'AuthController processes']
+  GoogleOAuthId int [ref: > External_GoogleOAuth.Id, note: 'OAuth flow to Google']
+  FacebookOAuthId int [ref: > External_FacebookOAuth.Id, note: 'OAuth flow to Facebook']
+  DatabaseId int [ref: > External_SQLServerDatabase.Id, note: 'Saves user data to']
+}
+
+Table DataFlow_ChatMessage {
+  Id int [pk, increment]
+  Step1 varchar(200) [note: 'User sends message via UI']
+  Step2 varchar(200) [note: 'ChatController receives POST request']
+  Step3 varchar(200) [note: 'Create/retrieve ChatSession']
+  Step4 varchar(200) [note: 'Save user message to ChatMessages']
+  Step5 varchar(200) [note: 'DialogflowService processes message']
+  Step6 varchar(200) [note: 'Dialogflow API detects intent & entities']
+  Step7 varchar(200) [note: 'If recommendation intent: UserBehaviorService generates rankings']
+  Step8 varchar(200) [note: 'Query Google Maps API for restaurants']
+  Step9 varchar(200) [note: 'Apply prescriptive algorithm']
+  Step10 varchar(200) [note: 'Save AI response to ChatMessages']
+  Step11 varchar(200) [note: 'Track interaction in UserBehaviors']
+  Step12 varchar(200) [note: 'Return response to UI']
+  PresentationLayerId int [ref: > PresentationLayer.Id, note: 'User input from']
+  ControllerLayerId int [ref: > ControllerLayer.Id, note: 'ChatController handles']
+  ServiceLayerId int [ref: > ServiceLayer.Id, note: 'Service processes']
+  DialogflowAPIId int [ref: > External_DialogflowAPI.Id, note: 'Calls Dialogflow']
+  GoogleMapsAPIId int [ref: > External_GoogleMapsAPI.Id, note: 'Queries restaurants']
+  DatabaseId int [ref: > External_SQLServerDatabase.Id, note: 'Saves messages to']
+}
+
+Table DataFlow_FoodRecommendation {
+  Id int [pk, increment]
+  Step1 varchar(200) [note: 'User query extracted from chat']
+  Step2 varchar(200) [note: 'Load user preferences (UserFoodTypes)']
+  Step3 varchar(200) [note: 'Load dietary restrictions (UserDietaryRestrictions)']
+  Step4 varchar(200) [note: 'Load health conditions (UserHealthConditions)']
+  Step5 varchar(200) [note: 'Load behavioral patterns (UserPreferencePatterns)']
+  Step6 varchar(200) [note: 'Load user behaviors (UserBehaviors)']
+  Step7 varchar(200) [note: 'Calculate prescriptive scores']
+  Step8 varchar(200) [note: 'Query Google Maps Places API']
+  Step9 varchar(200) [note: 'Filter by location proximity']
+  Step10 varchar(200) [note: 'Rank restaurants by prescriptive score']
+  Step11 varchar(200) [note: 'Return top recommendations']
+  ServiceLayerId int [ref: > ServiceLayer.Id, note: 'UserBehaviorService executes']
+  DatabaseId int [ref: > External_SQLServerDatabase.Id, note: 'Loads user data from']
+  GoogleMapsAPIId int [ref: > External_GoogleMapsAPI.Id, note: 'Queries restaurant data']
+  ControllerLayerId int [ref: < ControllerLayer.Id, note: 'Returns results to']
+}
+
+Table DataFlow_BehaviorLearning {
+  Id int [pk, increment]
+  Step1 varchar(200) [note: 'User interaction occurs']
+  Step2 varchar(200) [note: 'Track in UserBehaviors table']
+  Step3 varchar(200) [note: 'Analyze patterns (time, cuisine, location)']
+  Step4 varchar(200) [note: 'Update/create UserPreferencePatterns']
+  Step5 varchar(200) [note: 'Calculate confidence scores']
+  Step6 varchar(200) [note: 'Update interaction metrics']
+  Step7 varchar(200) [note: 'Patterns influence future recommendations']
+  ServiceLayerId int [ref: > ServiceLayer.Id, note: 'UserBehaviorService analyzes']
+  DatabaseId int [ref: > External_SQLServerDatabase.Id, note: 'Saves patterns to']
+  ControllerLayerId int [ref: < ControllerLayer.Id, note: 'Triggered by']
+}
+
+Table DataFlow_RestaurantSearch {
+  Id int [pk, increment]
+  Step1 varchar(200) [note: 'User provides location (GPS or address)']
+  Step2 varchar(200) [note: 'Query Google Maps Places API']
+  Step3 varchar(200) [note: 'Filter by food type/cuisine']
+  Step4 varchar(200) [note: 'Apply user preferences']
+  Step5 varchar(200) [note: 'Calculate distance using Haversine formula']
+  Step6 varchar(200) [note: 'Display on map with markers']
+  Step7 varchar(200) [note: 'User selects restaurant']
+  Step8 varchar(200) [note: 'Save to UserFavoriteRestaurants if favorited']
+  PresentationLayerId int [ref: > PresentationLayer.Id, note: 'User input from']
+  ControllerLayerId int [ref: > ControllerLayer.Id, note: 'Controller processes']
+  GoogleMapsAPIId int [ref: > External_GoogleMapsAPI.Id, note: 'Queries restaurant data']
+  DatabaseId int [ref: > External_SQLServerDatabase.Id, note: 'Saves favorites to']
+}
+
+// ============================================
+// SYSTEM ARCHITECTURE SUMMARY
+// ============================================
+
+Table SystemArchitecture {
+  Id int [pk, increment]
+  Frontend varchar(500) [note: 'Razor Views (Chat.cshtml, Index.cshtml), JavaScript (site.js), TailwindCSS (output.css), Google Maps JavaScript API']
+  Backend varchar(500) [note: 'ASP.NET Core 8.0 MVC, C# Controllers, Service Layer']
+  Database varchar(500) [note: 'SQL Server, Entity Framework Core, Migrations']
+  ExternalAPIs varchar(1000) [note: 'Google Maps API, Dialogflow API, Google OAuth, Facebook OAuth, ScrapingBee API']
+  Authentication varchar(500) [note: 'Cookie-based sessions, OAuth 2.0 (Google/Facebook), BCrypt password hashing']
+  Caching varchar(200) [note: 'In-memory caching for large datasets']
+  PresentationLayerId int [ref: > PresentationLayer.Id, note: 'Includes']
+  ControllerLayerId int [ref: > ControllerLayer.Id, note: 'Includes']
+  ServiceLayerId int [ref: > ServiceLayer.Id, note: 'Includes']
+  DataAccessLayerId int [ref: > DataAccessLayer.Id, note: 'Includes']
+}
+
+// ============================================
+// FLOW ARROWS SUMMARY
+// ============================================
+// 
+// MAIN DATA FLOW (Top to Bottom):
+// PresentationLayer → ControllerLayer → ServiceLayer → DataAccessLayer → External_SQLServerDatabase
+//
+// EXTERNAL API FLOWS:
+// ServiceLayer → External_DialogflowAPI (NLP processing)
+// ServiceLayer → External_GoogleMapsAPI (Restaurant search)
+// ServiceLayer → External_ScrapingBeeAPI (Web scraping)
+// ControllerLayer → External_GoogleOAuth (Authentication)
+// ControllerLayer → External_FacebookOAuth (Authentication)
+//
+// FEEDBACK FLOWS (Bottom to Top):
+// External_SQLServerDatabase → DataAccessLayer → ServiceLayer → ControllerLayer → PresentationLayer
+// External_DialogflowAPI → ServiceLayer → ControllerLayer → PresentationLayer
+// External_GoogleMapsAPI → ServiceLayer → ControllerLayer → PresentationLayer
+//
+// AUTHENTICATION FLOWS:
+// PresentationLayer → ControllerLayer → External_GoogleOAuth → ControllerLayer → External_SQLServerDatabase
+// PresentationLayer → ControllerLayer → External_FacebookOAuth → ControllerLayer → External_SQLServerDatabase
+//
+// CHAT MESSAGE FLOW:
+// PresentationLayer → ControllerLayer → ServiceLayer → External_DialogflowAPI
+// ServiceLayer → External_GoogleMapsAPI (for recommendations)
+// ServiceLayer → External_SQLServerDatabase (save messages)
+// ServiceLayer → ControllerLayer → PresentationLayer (response)
+//
+// RECOMMENDATION FLOW:
+// ControllerLayer → ServiceLayer → External_SQLServerDatabase (load user data)
+// ServiceLayer → External_GoogleMapsAPI (search restaurants)
+// ServiceLayer → External_SQLServerDatabase (save behavior)
+// ServiceLayer → ControllerLayer → PresentationLayer (display results)
+

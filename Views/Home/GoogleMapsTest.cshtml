@@ -1,0 +1,681 @@
+@inject IConfiguration Configuration
+@{
+    ViewData["Title"] = "Google Maps API Test";
+}
+
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header Section -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">Davao City Maps & Places</h1>
+            <p class="text-lg text-gray-600">Explore and search for locations within Davao City, Philippines</p>
+            <div class="mt-4 p-4 bg-green-100 border border-green-400 rounded-lg">
+                <p class="text-green-800 font-medium">API Key source: <span class="font-mono text-sm">GoogleMaps:ApiKey (configured at runtime)</span></p>
+            </div>
+        </div>
+
+        <!-- Search and Controls Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <!-- Search Box -->
+            <div class="lg:col-span-2">
+                <div class="flex flex-col">
+                    <div class="flex">
+                        <input type="text" id="searchInput" placeholder="Search for a location in Davao City (e.g., SM City, People's Park, Samal Island)..." 
+                               class="flex-1 px-4 py-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               oninput="showSearchSuggestions()">
+                        <button onclick="searchLocation()" 
+                                class="px-6 py-3 bg-blue-600 text-white font-medium rounded-r-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            Search
+                        </button>
+                    </div>
+                    <div id="searchSuggestions" class="hidden mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto z-10"></div>
+                </div>
+            </div>
+
+            <!-- Map Controls -->
+            <div class="flex gap-2">
+                <button onclick="getCurrentLocation()" 
+                        class="px-4 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                    📍 My Location
+                </button>
+                <button onclick="resetMap()" 
+                        class="px-4 py-3 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                    🔄 Reset
+                </button>
+            </div>
+        </div>
+
+        <!-- Map Container -->
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div id="map" class="w-full h-96"></div>
+        </div>
+
+        <!-- Map Information Panel -->
+        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Coordinates Display -->
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Map Coordinates</h3>
+                <div class="space-y-2">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Latitude:</span>
+                        <span id="latDisplay" class="font-mono text-gray-800">-</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Longitude:</span>
+                        <span id="lngDisplay" class="font-mono text-gray-800">-</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Zoom Level:</span>
+                        <span id="zoomDisplay" class="font-mono text-gray-800">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Status -->
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">API Status</h3>
+                <div class="space-y-2">
+                    <div class="flex items-center">
+                        <div id="apiStatus" class="w-3 h-3 rounded-full bg-gray-400 mr-2"></div>
+                        <span id="apiStatusText" class="text-gray-600">Checking...</span>
+                    </div>
+                    <div class="text-sm text-gray-500">
+                        <p>Last updated: <span id="lastUpdated">-</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Results Panel -->
+        <div id="resultsPanel" class="mt-6 bg-white p-6 rounded-lg shadow-lg hidden">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Search Results</h3>
+            <div id="searchResultsList" class="divide-y divide-gray-100"></div>
+        </div>
+
+        <!-- Test Features Section -->
+        <div class="mt-8 bg-white p-6 rounded-lg shadow-lg">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Test Features</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <button onclick="addMarker()" 
+                        class="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    Add Marker
+                </button>
+                <button onclick="drawPolygon()" 
+                        class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    Draw Polygon
+                </button>
+                <button onclick="getDirections()" 
+                        class="px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    Get Directions
+                </button>
+                <button onclick="toggleTraffic()" 
+                        class="px-4 py-2 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                    Toggle Traffic
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://maps.googleapis.com/maps/api/js?key=@Configuration[&quot;GoogleMaps:ApiKey&quot;]&libraries=places&callback=initMap" async defer></script>
+    <script>
+        let map;
+        let markers = [];
+        let polygons = [];
+        let trafficLayer;
+        let directionsService;
+        let directionsRenderer;
+        let currentInfoWindow;
+        let placesService;
+        let lastSearchResults = [];
+
+        function initMap() {
+            // Initialize map with a temporary center (will be updated with user's location)
+            const tempLocation = { lat: 0, lng: 0 };
+            
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: tempLocation,
+                zoom: 15,
+                mapTypeId: google.maps.MapTypeId.HYBRID,
+                mapTypeControl: true,
+                streetViewControl: true,
+                fullscreenControl: true,
+                zoomControl: true
+            });
+
+            // Initialize services
+            directionsService = new google.maps.DirectionsService();
+            directionsRenderer = new google.maps.DirectionsRenderer();
+            directionsRenderer.setMap(map);
+            placesService = new google.maps.places.PlacesService(map);
+
+            // Initialize traffic layer
+            trafficLayer = new google.maps.TrafficLayer();
+            trafficLayer.setMap(map);
+
+            // Add click listener to map
+            map.addListener('click', function(event) {
+                placeMarker(event.latLng);
+                updateCoordinates(event.latLng);
+            });
+
+            // Add zoom change listener
+            map.addListener('zoom_changed', function() {
+                document.getElementById('zoomDisplay').textContent = map.getZoom();
+            });
+
+            // Add bounds change listener
+            map.addListener('bounds_changed', function() {
+                const center = map.getCenter();
+                if (center) {
+                    updateCoordinates(center);
+                }
+            });
+
+            // Get user's current location and center map there
+            getCurrentLocationOnLoad();
+
+            // Update API status
+            updateApiStatus(true);
+            updateLastUpdated();
+        }
+
+        function toLatLngLiteral(latLng) {
+            if (!latLng) return null;
+            if (typeof latLng.lat === 'function') {
+                return { lat: latLng.lat(), lng: latLng.lng() };
+            }
+            if (typeof latLng.lat === 'number' && typeof latLng.lng === 'number') {
+                return { lat: latLng.lat, lng: latLng.lng };
+            }
+            return null;
+        }
+
+        // Local places database - Davao City locations only
+        const localPlaces = [
+            // Davao City - Major Districts
+            { name: "Poblacion", lat: 7.1907, lng: 125.4553, country: "Philippines", type: "District" },
+            { name: "Buhangin", lat: 7.2000, lng: 125.4500, country: "Philippines", type: "District" },
+            { name: "Bunawan", lat: 7.1800, lng: 125.4700, country: "Philippines", type: "District" },
+            { name: "Paquibato", lat: 7.2500, lng: 125.4000, country: "Philippines", type: "District" },
+            { name: "Marilog", lat: 7.3000, lng: 125.3500, country: "Philippines", type: "District" },
+            { name: "Calinan", lat: 7.1500, lng: 125.3500, country: "Philippines", type: "District" },
+            { name: "Baguio", lat: 7.1000, lng: 125.4000, country: "Philippines", type: "District" },
+            { name: "Toril", lat: 7.0500, lng: 125.4500, country: "Philippines", type: "District" },
+            { name: "Tugbok", lat: 7.1200, lng: 125.3800, country: "Philippines", type: "District" },
+            { name: "Talomo", lat: 7.0800, lng: 125.4200, country: "Philippines", type: "District" },
+            
+            // Philippines - Tourist Destinations
+            { name: "Boracay", lat: 11.9674, lng: 121.9248, country: "Philippines", type: "Beach" },
+            { name: "Palawan", lat: 9.8252, lng: 118.6120, country: "Philippines", type: "Island" },
+            { name: "Baguio", lat: 16.4023, lng: 120.5960, country: "Philippines", type: "City" },
+            { name: "Vigan", lat: 17.5745, lng: 120.3869, country: "Philippines", type: "Heritage" },
+            { name: "Sagada", lat: 17.0844, lng: 120.8996, country: "Philippines", type: "Mountain" },
+            { name: "Siargao", lat: 9.9025, lng: 126.0518, country: "Philippines", type: "Island" },
+            { name: "El Nido", lat: 11.1853, lng: 119.4956, country: "Philippines", type: "Beach" },
+            { name: "Coron", lat: 12.0000, lng: 120.2000, country: "Philippines", type: "Island" },
+            
+            // Asia - Major Cities
+
+            // Davao City - Universities & Schools
+            { name: "University of Mindanao", lat: 7.1907, lng: 125.4553, country: "Philippines", type: "University" },
+            { name: "Ateneo de Davao University", lat: 7.1880, lng: 125.4520, country: "Philippines", type: "University" },
+            { name: "University of the Philippines Mindanao", lat: 7.1200, lng: 125.3800, country: "Philippines", type: "University" },
+            { name: "San Pedro College", lat: 7.1907, lng: 125.4553, country: "Philippines", type: "College" },
+            { name: "Brokenshire College", lat: 7.1850, lng: 125.4600, country: "Philippines", type: "College" },
+            
+            // Davao City - Hospitals & Medical Centers
+            { name: "Davao Doctors Hospital", lat: 7.1907, lng: 125.4553, country: "Philippines", type: "Hospital" },
+            { name: "Southern Philippines Medical Center", lat: 7.1880, lng: 125.4520, country: "Philippines", type: "Hospital" },
+            { name: "Davao Medical School Foundation", lat: 7.1850, lng: 125.4600, country: "Philippines", type: "Hospital" },
+            { name: "Brodeth Hospital", lat: 7.1920, lng: 125.4580, country: "Philippines", type: "Hospital" },
+            
+            // Famous Landmarks
+            { name: "Eiffel Tower", lat: 48.8584, lng: 2.2945, country: "France", type: "Landmark" },
+            { name: "Statue of Liberty", lat: 40.6892, lng: -74.0445, country: "USA", type: "Landmark" },
+            { name: "Taj Mahal", lat: 27.1751, lng: 78.0421, country: "India", type: "Landmark" },
+            { name: "Great Wall", lat: 40.4319, lng: 116.5704, country: "China", type: "Landmark" },
+            { name: "Machu Picchu", lat: -13.1631, lng: -72.5450, country: "Peru", type: "Landmark" },
+            { name: "Christ the Redeemer", lat: -22.9519, lng: -43.2105, country: "Brazil", type: "Landmark" },
+            { name: "Petra", lat: 30.3285, lng: 35.4444, country: "Jordan", type: "Landmark" },
+            { name: "Colosseum", lat: 41.8902, lng: 12.4922, country: "Italy", type: "Landmark" }
+        ];
+
+        function searchLocation() {
+            const raw = document.getElementById('searchInput').value.trim();
+            const input = raw.toLowerCase();
+            if (!input) return;
+
+            document.getElementById('apiStatusText').textContent = 'Searching...';
+            hideResultsPanel();
+
+            // Search locally for broad matches
+            const localResults = localPlaces.filter(place =>
+                place.name.toLowerCase().includes(input) ||
+                place.country.toLowerCase().includes(input) ||
+                place.type.toLowerCase().includes(input)
+            );
+
+            if (localResults.length > 0) {
+                showMultipleLocalResults(localResults);
+                updateApiStatus(true);
+                document.getElementById('apiStatusText').textContent = `Showing ${Math.min(localResults.length, 20)} local result(s)`;
+            } else {
+                // Use Places Text Search for broader, related results
+                tryGoogleSearch(raw);
+            }
+        }
+
+        function clearMarkers() {
+            markers.forEach(marker => marker.setMap(null));
+            markers = [];
+        }
+
+        function showMultipleLocalResults(results) {
+            clearMarkers();
+            lastSearchResults = results.map((place, idx) => ({
+                name: place.name,
+                address: place.country + (place.type ? ` • ${place.type}` : ''),
+                location: { lat: place.lat, lng: place.lng },
+                source: 'local',
+                index: idx
+            }));
+
+            const bounds = new google.maps.LatLngBounds();
+            lastSearchResults.forEach((res, i) => {
+                placeMarker(res.location, res.name);
+                const ll = toLatLngLiteral(res.location);
+                if (ll) bounds.extend(ll);
+            });
+
+            if (!bounds.isEmpty()) {
+                map.fitBounds(bounds);
+            }
+
+            renderSearchResults(lastSearchResults);
+        }
+
+        function showLocalSearchResults(results) {
+            const resultList = results.map(place => 
+                `${place.name}, ${place.country} (${place.type})`
+            ).join('\n');
+            
+            if (results.length <= 5) {
+                alert(`Found ${results.length} locations:\n\n${resultList}`);
+            } else {
+                alert(`Found ${results.length} locations. Showing first 5:\n\n${resultList}`);
+            }
+        }
+
+        function tryGoogleSearch(input) {
+            if (!(typeof google !== 'undefined' && google.maps && google.maps.places && placesService)) {
+                alert('Places API not available. Showing local suggestions only.');
+                document.getElementById('apiStatusText').textContent = 'Local Search Only';
+                updateApiStatus(false);
+                return;
+            }
+
+            const davaoCenter = new google.maps.LatLng(7.1907, 125.4553);
+            const request = {
+                query: input,
+                location: davaoCenter,
+                radius: 30000,
+                region: 'PH'
+            };
+
+            placesService.textSearch(request, function(results, status) {
+                if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length) {
+                    clearMarkers();
+                    lastSearchResults = results.slice(0, 20).map((r, idx) => ({
+                        name: r.name,
+                        address: r.formatted_address || r.vicinity || '',
+                        location: r.geometry && r.geometry.location ? r.geometry.location : null,
+                        source: 'google',
+                        index: idx
+                    })).filter(r => !!r.location);
+
+                    const bounds = new google.maps.LatLngBounds();
+                    lastSearchResults.forEach(res => {
+                        placeMarker(res.location, res.name);
+                        const ll = toLatLngLiteral(res.location);
+                        if (ll) bounds.extend(ll);
+                    });
+
+                    if (!bounds.isEmpty()) {
+                        map.fitBounds(bounds);
+                    }
+
+                    renderSearchResults(lastSearchResults);
+                    document.getElementById('apiStatusText').textContent = `Showing ${lastSearchResults.length} result(s)`;
+                    updateApiStatus(true);
+                } else {
+                    let errorMessage = 'No results found: ' + status;
+                    switch (status) {
+                        case google.maps.places.PlacesServiceStatus.ZERO_RESULTS:
+                            errorMessage = 'No results found for: ' + input;
+                            break;
+                        case google.maps.places.PlacesServiceStatus.OVER_QUERY_LIMIT:
+                            errorMessage = 'Google API quota exceeded. Try again later or use local search.';
+                            break;
+                        case google.maps.places.PlacesServiceStatus.REQUEST_DENIED:
+                            errorMessage = 'Google API request denied. Using local search only.';
+                            break;
+                        case google.maps.places.PlacesServiceStatus.INVALID_REQUEST:
+                            errorMessage = 'Invalid search query.';
+                            break;
+                        case google.maps.places.PlacesServiceStatus.UNKNOWN_ERROR:
+                            errorMessage = 'Unknown Google API error. Try again.';
+                            break;
+                    }
+                    alert(errorMessage);
+                    document.getElementById('apiStatusText').textContent = 'Local Search Only';
+                    updateApiStatus(false);
+                }
+            });
+        }
+
+        function renderSearchResults(results) {
+            const panel = document.getElementById('resultsPanel');
+            const list = document.getElementById('searchResultsList');
+            if (!results || results.length === 0) {
+                hideResultsPanel();
+                return;
+            }
+
+            const items = results.map((r, i) => {
+                const safeAddr = r.address ? r.address : '';
+                return `
+                <div class="py-3 cursor-pointer hover:bg-gray-50" onclick="focusResult(${i})">
+                    <div class="flex items-start gap-3">
+                        <div class="mt-1 text-sm text-gray-500">${i + 1}.</div>
+                        <div>
+                            <div class="font-medium text-gray-800">${r.name}</div>
+                            ${safeAddr ? `<div class=\"text-sm text-gray-600\">${safeAddr}</div>` : ''}
+                            <div class="text-xs text-gray-500">Source: ${r.source}</div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            list.innerHTML = items;
+            panel.classList.remove('hidden');
+        }
+
+        function hideResultsPanel() {
+            const panel = document.getElementById('resultsPanel');
+            const list = document.getElementById('searchResultsList');
+            list.innerHTML = '';
+            panel.classList.add('hidden');
+        }
+
+        function focusResult(index) {
+            if (!markers || index < 0 || index >= markers.length) return;
+            const marker = markers[index];
+            const pos = marker.getPosition();
+            if (pos) {
+                map.setCenter(pos);
+                map.setZoom(Math.max(map.getZoom(), 15));
+                google.maps.event.trigger(marker, 'click');
+            }
+        }
+
+        function showSearchSuggestions() {
+            const input = document.getElementById('searchInput').value.trim().toLowerCase();
+            const suggestionsDiv = document.getElementById('searchSuggestions');
+            
+            if (input.length < 2) {
+                suggestionsDiv.classList.add('hidden');
+                return;
+            }
+            
+            const suggestions = localPlaces.filter(place => 
+                place.name.toLowerCase().includes(input) ||
+                place.country.toLowerCase().includes(input) ||
+                place.type.toLowerCase().includes(input)
+            ).slice(0, 8); // Limit to 8 suggestions
+            
+            if (suggestions.length > 0) {
+                const suggestionsHTML = suggestions.map(place => 
+                    `<div class="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0" 
+                         onclick="selectSuggestion('${place.name}')">
+                        <div class="font-medium">${place.name}</div>
+                        <div class="text-sm text-gray-600">${place.country} • ${place.type}</div>
+                    </div>`
+                ).join('');
+                
+                suggestionsDiv.innerHTML = suggestionsHTML;
+                suggestionsDiv.classList.remove('hidden');
+            } else {
+                suggestionsDiv.classList.add('hidden');
+            }
+        }
+
+        function selectSuggestion(placeName) {
+            document.getElementById('searchInput').value = placeName;
+            document.getElementById('searchSuggestions').classList.add('hidden');
+            searchLocation();
+        }
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', function(event) {
+            const suggestionsDiv = document.getElementById('searchSuggestions');
+            const searchInput = document.getElementById('searchInput');
+            
+            if (!searchInput.contains(event.target) && !suggestionsDiv.contains(event.target)) {
+                suggestionsDiv.classList.add('hidden');
+            }
+        });
+
+        function getCurrentLocationOnLoad() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const pos = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        map.setCenter(pos);
+                        map.setZoom(15);
+                        placeMarker(pos, '📍 My Current Location');
+                        updateCoordinates(pos);
+                        
+                        // Update the status to show location was found
+                        document.getElementById('apiStatusText').textContent = 'Location Found';
+                    },
+                    function(error) {
+                        console.log('Geolocation error:', error);
+                        // Fallback to a default location if geolocation fails
+                        const defaultLocation = { lat: 14.5995, lng: 120.9842 }; // Manila, Philippines
+                        map.setCenter(defaultLocation);
+                        map.setZoom(12);
+                        placeMarker(defaultLocation, 'Default Location (Manila)');
+                        updateCoordinates(defaultLocation);
+                        document.getElementById('apiStatusText').textContent = 'Using Default Location';
+                    }
+                );
+            } else {
+                // Fallback for browsers that don't support geolocation
+                const defaultLocation = { lat: 14.5995, lng: 120.9842 }; // Manila, Philippines
+                map.setCenter(defaultLocation);
+                map.setZoom(12);
+                placeMarker(defaultLocation, 'Default Location (Manila)');
+                updateCoordinates(defaultLocation);
+                document.getElementById('apiStatusText').textContent = 'Geolocation Not Supported';
+            }
+        }
+
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const pos = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        map.setCenter(pos);
+                        map.setZoom(15);
+                        placeMarker(pos, '📍 My Location');
+                        updateCoordinates(pos);
+                    },
+                    function() {
+                        alert('Error: The Geolocation service failed.');
+                    }
+                );
+            } else {
+                alert('Error: Your browser doesn\'t support geolocation.');
+            }
+        }
+
+        function placeMarker(location, title = '') {
+            const ll = toLatLngLiteral(location);
+            if (!ll) return;
+
+            const marker = new google.maps.Marker({
+                position: ll,
+                map: map,
+                title: title || `Marker ${markers.length + 1}`,
+                animation: google.maps.Animation.DROP
+            });
+
+            const infoWindow = new google.maps.InfoWindow({
+                content: `<div><strong>${marker.getTitle()}</strong><br>Lat: ${ll.lat.toFixed(6)}<br>Lng: ${ll.lng.toFixed(6)}</div>`
+            });
+
+            marker.addListener('click', function() {
+                if (currentInfoWindow) {
+                    currentInfoWindow.close();
+                }
+                infoWindow.open(map, marker);
+                currentInfoWindow = infoWindow;
+            });
+
+            markers.push(marker);
+        }
+
+        function addMarker() {
+            const center = map.getCenter();
+            if (center) {
+                placeMarker(center, `Test Marker ${markers.length + 1}`);
+            }
+        }
+
+        function drawPolygon() {
+            const center = map.getCenter();
+            if (!center) return;
+
+            const polygon = new google.maps.Polygon({
+                paths: [
+                    { lat: center.lat() - 0.01, lng: center.lng() - 0.01 },
+                    { lat: center.lat() + 0.01, lng: center.lng() - 0.01 },
+                    { lat: center.lat() + 0.01, lng: center.lng() + 0.01 },
+                    { lat: center.lat() - 0.01, lng: center.lng() + 0.01 }
+                ],
+                strokeColor: '#FF0000',
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
+                fillColor: '#FF0000',
+                fillOpacity: 0.35,
+                map: map
+            });
+
+            polygons.push(polygon);
+        }
+
+        function getDirections() {
+            if (markers.length < 2) {
+                alert('Please add at least 2 markers to get directions');
+                return;
+            }
+
+            const origin = markers[0].getPosition();
+            const destination = markers[1].getPosition();
+
+            const request = {
+                origin: origin,
+                destination: destination,
+                travelMode: google.maps.TravelMode.DRIVING
+            };
+
+            directionsService.route(request, function(result, status) {
+                if (status === 'OK') {
+                    directionsRenderer.setDirections(result);
+                } else {
+                    alert('Directions request failed due to ' + status);
+                }
+            });
+        }
+
+        function toggleTraffic() {
+            if (trafficLayer.getMap()) {
+                trafficLayer.setMap(null);
+            } else {
+                trafficLayer.setMap(map);
+            }
+        }
+
+        function resetMap() {
+            // Clear markers
+            markers.forEach(marker => marker.setMap(null));
+            markers = [];
+
+            // Clear polygons
+            polygons.forEach(polygon => polygon.setMap(null));
+            polygons = [];
+
+            // Clear directions
+            directionsRenderer.setDirections({ routes: [] });
+
+            // Reset to user's current location
+            getCurrentLocationOnLoad();
+
+            // Clear coordinates display
+            document.getElementById('latDisplay').textContent = '-';
+            document.getElementById('lngDisplay').textContent = '-';
+            document.getElementById('zoomDisplay').textContent = map.getZoom();
+            hideResultsPanel();
+        }
+
+        function updateCoordinates(latLng) {
+            const ll = toLatLngLiteral(latLng);
+            if (!ll) return;
+            document.getElementById('latDisplay').textContent = ll.lat.toFixed(6);
+            document.getElementById('lngDisplay').textContent = ll.lng.toFixed(6);
+            document.getElementById('zoomDisplay').textContent = map.getZoom();
+        }
+
+        function updateApiStatus(isWorking) {
+            const statusElement = document.getElementById('apiStatus');
+            const statusTextElement = document.getElementById('apiStatusText');
+            
+            if (isWorking) {
+                statusElement.className = 'w-3 h-3 rounded-full bg-green-500 mr-2';
+                statusTextElement.textContent = 'Working';
+            } else {
+                statusElement.className = 'w-3 h-3 rounded-full bg-red-500 mr-2';
+                statusTextElement.textContent = 'Error';
+            }
+        }
+
+        function updateLastUpdated() {
+            const now = new Date();
+            document.getElementById('lastUpdated').textContent = now.toLocaleString();
+        }
+
+        // Handle API loading errors
+        window.gm_authFailure = function() {
+            updateApiStatus(false);
+            alert('Google Maps API authentication failed. Please check your API key.');
+        };
+
+        // Update coordinates when map is ready
+        google.maps.event.addDomListener(window, 'load', function() {
+            setTimeout(function() {
+                const center = map.getCenter();
+                if (center) {
+                    updateCoordinates(center);
+                }
+            }, 1000);
+        });
+    </script>
+}

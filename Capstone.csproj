@@ -1,0 +1,51 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>6c513efb-f2d1-43f9-a63b-ded16e370ba5</UserSecretsId>
+    <!-- Ensure build outputs go to bin/obj directories only -->
+    <BaseOutputPath>bin\</BaseOutputPath>
+    <BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="Google.Cloud.Dialogflow.V2" Version="4.26.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.5">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Ngrok.AspNetCore" Version="1.0.6" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Facebook" Version="8.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.11.54" />
+  </ItemGroup>
+
+	<ItemGroup>
+		<Content Remove="wwwroot\css\output.css" />
+		<Content Remove="wwwroot\Capstone.styles.css" />
+	</ItemGroup>
+
+	<!-- Exclude root-level build artifacts to prevent publish conflicts -->
+	<ItemGroup>
+		<Content Remove="Capstone.deps.json" />
+		<Content Remove="Capstone.dll" />
+		<Content Remove="Capstone.exe" />
+		<Content Remove="Capstone.pdb" />
+		<Content Remove="Capstone.runtimeconfig.json" />
+		<Content Remove="Capstone.staticwebassets.endpoints.json" />
+	</ItemGroup>
+
+	<Target Name="BuildCss" BeforeTargets="ComputeStaticWebAssetsInputs">
+		<Exec Command="npx tailwindcss -i ./wwwroot/css/site.css -o ./wwwroot/css/output.css --minify" />
+		<ItemGroup>
+			<Content Include="wwwroot\css\output.css" />
+		</ItemGroup>
+	</Target>
+
+</Project>

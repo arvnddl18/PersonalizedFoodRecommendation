@@ -1,0 +1,275 @@
+// FoodieSaur - Entity Relationship Diagram
+// Personalized Location-Based Food Assistant System
+// Generated: 2024
+
+// ============================================
+// CORE USER MANAGEMENT
+// ============================================
+
+Table Users {
+  UserId int [pk, increment]
+  Name varchar(100) [not null]
+  Email varchar(100) [not null, unique]
+  PasswordHash varchar(255) [null, note: 'Nullable for OAuth users']
+  Provider varchar(50) [null, note: 'local, google, facebook']
+  ProviderId varchar(100) [null, note: 'OAuth provider user ID']
+  ProviderData varchar(2000) [null, note: 'JSON data from OAuth provider']
+  CreatedAt datetime [not null]
+  LastLogin datetime [null]
+  
+  indexes {
+    Email [unique]
+  }
+}
+
+Table UserProfiles {
+  ProfileId int [pk, increment]
+  UserId int [not null, ref: > Users.UserId, unique]
+  Age int [null, note: 'Range: 13-120']
+  Gender varchar(20) [null, note: 'Male, Female, Other']
+  ActivityLevel varchar(20) [null, note: 'Sedentary, Moderate, Active']
+  PreferredLocation varchar(200) [null]
+  PriceRange varchar(20) [null, note: 'Budget, Moderate, Premium']
+  LastUpdated datetime [not null]
+}
+
+// ============================================
+// FOOD TYPES & PREFERENCES
+// ============================================
+
+Table FoodTypes {
+  FoodTypeId int [pk, increment]
+  Name varchar(50) [not null]
+  Description varchar(200) [null]
+  CuisineType varchar(50) [not null]
+  
+  // Nutritional Properties
+  IsHealthy bool [default: false]
+  IsLowCalorie bool [default: false]
+  IsHighProtein bool [default: false]
+  IsNutrientDense bool [default: false]
+  IsVitaminRich bool [default: false]
+  
+  // Health-Specific Properties
+  IsLowGlycemic bool [default: false]
+  IsLowSodium bool [default: false]
+  IsHeartHealthy bool [default: false]
+  IsIronRich bool [default: false]
+  
+  // Dietary Restriction Compliance
+  ContainsGluten bool [default: false]
+  ContainsDairy bool [default: false]
+  ContainsNuts bool [default: false]
+  ContainsMeat bool [default: false]
+  IsVegetarian bool [default: false]
+  IsVegan bool [default: false]
+  
+  // Meal Type Classification
+  IsBreakfast bool [default: false]
+  IsLunch bool [default: false]
+  IsDinner bool [default: false]
+  IsSnacks bool [default: false]
+  IsDessert bool [default: false]
+  IsBeverage bool [default: false]
+}
+
+Table UserFoodTypes {
+  UserFoodTypeId int [pk, increment]
+  UserId int [not null, ref: > Users.UserId]
+  FoodTypeId int [not null, ref: > FoodTypes.FoodTypeId]
+  PreferenceLevel varchar(20) [not null, default: 'Preferred', note: 'Preferred, Avoided, Neutral']
+  PreferenceScore int [not null, default: 7, note: 'Range: 1-10']
+  AddedAt datetime [not null]
+  LastSelected datetime [null]
+  
+  indexes {
+    (UserId, FoodTypeId) [unique]
+  }
+}
+
+Table FoodPreferences {
+  PreferenceId int [pk, increment]
+  UserId int [not null, ref: > Users.UserId]
+  FoodTypeId int [not null, ref: > FoodTypes.FoodTypeId]
+  PreferenceLevel varchar(20) [not null]
+  PreferenceScore int [default: 5, note: 'Range: 1-10']
+  LastSelected datetime [null]
+  
+  note: 'Deprecated: Use UserFoodTypes instead'
+}
+
+// ============================================
+// DIETARY RESTRICTIONS & HEALTH CONDITIONS
+// ============================================
+
+Table DietaryRestrictions {
+  DietaryRestrictionId int [pk, increment]
+  Name varchar(50) [not null, note: 'e.g., Vegan, Gluten-Free, Dairy-Free']
+  Description varchar(200) [null]
+}
+
+Table UserDietaryRestrictions {
+  UserDietaryRestrictionId int [pk, increment]
+  UserId int [not null, ref: > Users.UserId]
+  DietaryRestrictionId int [not null, ref: > DietaryRestrictions.DietaryRestrictionId]
+  ImportanceLevel int [not null, default: 1, note: 'Range: 1-10']
+  AddedAt datetime [not null]
+  
+  indexes {
+    (UserId, DietaryRestrictionId) [unique]
+  }
+}
+
+Table HealthConditions {
+  HealthConditionId int [pk, increment]
+  Name varchar(50) [not null, note: 'e.g., Diabetes, Hypertension, Heart Disease']
+  Description varchar(200) [null]
+  RecommendedDiets varchar(500) [null, note: 'JSON array of recommended dietary patterns']
+}
+
+Table UserHealthConditions {
+  UserHealthConditionId int [pk, increment]
+  UserId int [not null, ref: > Users.UserId]
+  HealthConditionId int [not null, ref: > HealthConditions.HealthConditionId]
+  SeverityLevel int [not null, default: 1, note: 'Range: 1-10']
+  DiagnosedAt datetime [not null]
+  
+  indexes {
+    (UserId, HealthConditionId) [unique]
+  }
+}
+
+// ============================================
+// CHAT SYSTEM
+// ============================================
+
+Table ChatSessions {
+  SessionId int [pk, increment]
+  UserId int [not null, ref: > Users.UserId]
+  StartedAt datetime [not null]
+  EndedAt datetime [null]
+  
+  indexes {
+    UserId
+    StartedAt
+  }
+}
+
+Table ChatMessages {
+  MessageId int [pk, increment]
+  SessionId int [not null, ref: > ChatSessions.SessionId]
+  Sender varchar(20) [not null, note: 'user or ai']
+  MessageText varchar(1000) [not null]
+  Timestamp datetime [not null]
+  IntentDetected varchar(50) [not null, default: '']
+  ParametersJson varchar(500) [not null, default: '', note: 'JSON with extracted parameters']
+  
+  indexes {
+    SessionId
+    Timestamp
+  }
+}
+
+// ============================================
+// BEHAVIORAL LEARNING & PATTERNS
+// ============================================
+
+Table UserBehaviors {
+  BehaviorId int [pk, increment]
+  UserId int [not null, ref: > Users.UserId]
+  Action varchar(50) [not null, note: 'search, select, rate, reject, recommendation, conversation']
+  Context varchar(4000) [null, note: 'time, location, mood, query, food preferences']
+  Result varchar(2000) [null, note: 'success/failure, selected item, recommendation details']
+  Timestamp datetime [not null]
+  Satisfaction int [null, note: 'Range: 1-5 rating']
+  IntentDetected varchar(100) [null]
+  ParametersJson varchar(1000) [not null, default: '']
+  
+  // Recommendation-Specific Fields
+  ReasonForRecommendation varchar(200) [null]
+  EstablishmentInfo varchar(1000) [null, note: 'JSON with establishment details']
+  EstablishmentName varchar(100) [null]
+  CuisineType varchar(50) [null]
+  SelectedAt datetime [null]
+  
+  indexes {
+    UserId
+    Timestamp
+    Action
+  }
+}
+
+Table UserPreferencePatterns {
+  PatternId int [pk, increment]
+  UserId int [not null, ref: > Users.UserId]
+  PatternType varchar(50) [not null, note: 'time, location, cuisine, price']
+  PatternValue varchar(200) [not null]
+  Confidence decimal(3,2) [not null, note: 'Range: 0.00-1.00']
+  LastObserved datetime [not null]
+  ObservationCount int [not null]
+  TotalInteractions int [not null, default: 0]
+  SuccessfulInteractions int [not null, default: 0]
+  
+  indexes {
+    UserId
+    PatternType
+    Confidence
+  }
+}
+
+// ============================================
+// FAVORITES
+// ============================================
+
+Table UserFavoriteRestaurants {
+  FavoriteId int [pk, increment]
+  UserId int [not null, ref: > Users.UserId]
+  PlaceId varchar(255) [not null, note: 'Google Place ID']
+  Name varchar(200) [not null]
+  Address varchar(500) [null]
+  Rating decimal(3,2) [null]
+  PriceLevel int [null, note: '1-4 price level']
+  PhotoReference varchar(2000) [null, note: 'Google photo reference']
+  Latitude decimal(10,7) [null]
+  Longitude decimal(10,7) [null]
+  PhoneNumber varchar(100) [null]
+  Website varchar(500) [null]
+  Types varchar(1000) [null, note: 'JSON array of place types']
+  AddedAt datetime [not null]
+  LastViewed datetime [null]
+  UserNotes varchar(500) [null]
+  
+  indexes {
+    UserId
+    PlaceId
+    AddedAt
+  }
+}
+
+// ============================================
+// RELATIONSHIPS SUMMARY
+// ============================================
+
+// Users Relationships
+// Users 1:1 UserProfiles
+// Users 1:N UserFoodTypes
+// Users 1:N FoodPreferences (deprecated)
+// Users 1:N ChatSessions
+// Users 1:N UserBehaviors
+// Users 1:N UserPreferencePatterns
+// Users 1:N UserDietaryRestrictions
+// Users 1:N UserHealthConditions
+// Users 1:N UserFavoriteRestaurants
+
+// FoodTypes Relationships
+// FoodTypes 1:N UserFoodTypes
+// FoodTypes 1:N FoodPreferences (deprecated)
+
+// ChatSessions Relationships
+// ChatSessions 1:N ChatMessages
+
+// DietaryRestrictions Relationships
+// DietaryRestrictions 1:N UserDietaryRestrictions
+
+// HealthConditions Relationships
+// HealthConditions 1:N UserHealthConditions

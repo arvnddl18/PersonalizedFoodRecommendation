@@ -1,0 +1,311 @@
+@model Capstone.Models.NomsaurModel.User
+@{
+    ViewData["Title"] = "Register";
+    Layout = null;
+    var userAgent = Context.Request.Headers["User-Agent"].ToString();
+    bool isMobile = !string.IsNullOrEmpty(userAgent) && (
+        userAgent.Contains("Mobi", System.StringComparison.OrdinalIgnoreCase) ||
+        userAgent.Contains("Android", System.StringComparison.OrdinalIgnoreCase) ||
+        userAgent.Contains("iPhone", System.StringComparison.OrdinalIgnoreCase) ||
+        userAgent.Contains("iPad", System.StringComparison.OrdinalIgnoreCase) ||
+        userAgent.Contains("Windows Phone", System.StringComparison.OrdinalIgnoreCase)
+    );
+}
+
+@if (!isMobile)
+{
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Foodiesaur</title>
+        <link rel="icon" type="image/svg+xml" href="~/images/titlelogo.svg">
+        <link rel="alternate icon" type="image/png" href="~/images/titlelogo.png">
+        <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+        <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/Capstone.styles.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/output.css" asp-append-version="true" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+        <style>
+            @@keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            .animate-fade-in-up {
+                animation: fadeInUp 0.6s ease-out;
+            }
+            /* High-quality image rendering for desktop */
+            img[alt="FoodieSaur Illustration"] {
+                image-rendering: -webkit-optimize-contrast;
+                image-rendering: auto;
+                -ms-interpolation-mode: bicubic;
+                will-change: transform;
+                backface-visibility: hidden;
+                transform: translateZ(0);
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
+            }
+        </style>
+    </head>
+
+    <body class="bg-white min-h-screen overflow-hidden">
+        <div class="flex w-full h-screen animate-fade-in-up">
+            <!-- Left Side - Illustration (2/3) -->
+            <div class="w-2/3 relative bg-white overflow-hidden flex items-center justify-center">
+                <img src="~/images/final 1.png" alt="FoodieSaur Illustration" 
+                     class="w-full h-full object-contain object-center select-none" 
+                     loading="eager"
+                     decoding="async">
+            </div>
+
+            <!-- Right Side - Form (1/3) -->
+            <div class="w-1/3 bg-white flex items-center justify-center px-10">
+                <div class="w-full max-w-sm">
+                    <!-- Header -->
+                    <div class="text-center mb-8">
+                        <h2 class="text-3xl font-bold mb-2 text-gray-900">Sign Up</h2>
+                        <p class="text-gray-500 text-sm">First create your account</p>
+                    </div>
+
+                    <form asp-action="Register" asp-controller="Auth" method="post">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="text-red-600 text-xs mb-4 text-center"></div>
+
+                        <!-- Full Name -->
+                        <div class="mb-6">
+                            <input asp-for="Name" type="text" placeholder="Full name" class="w-full border-b-2 border-gray-300 focus:outline-none focus:border-gray-600 py-3 text-base text-gray-900 placeholder-gray-400 transition-colors bg-transparent">
+                            <span asp-validation-for="Name" class="text-red-600 text-xs mt-1 block"></span>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="mb-6">
+                            <input asp-for="Email" type="email" placeholder="Email" class="w-full border-b-2 border-gray-300 focus:outline-none focus:border-gray-600 py-3 text-base text-gray-900 placeholder-gray-400 transition-colors bg-transparent">
+                            <span asp-validation-for="Email" class="text-red-600 text-xs mt-1 block"></span>
+                        </div>
+
+                        <!-- Password -->
+                        <div class="mb-6">
+                            <input asp-for="Password" type="password" placeholder="Password" class="w-full border-b-2 border-gray-300 focus:outline-none focus:border-gray-600 py-3 text-base text-gray-900 placeholder-gray-400 transition-colors bg-transparent">
+                            <span asp-validation-for="Password" class="text-red-600 text-xs mt-1 block"></span>
+                        </div>
+
+                        <!-- Confirm Password -->
+                        <div class="mb-6">
+                            <input asp-for="ConfirmPassword" type="password" placeholder="Confirm your password" class="w-full border-b-2 border-gray-300 focus:outline-none focus:border-gray-600 py-3 text-base text-gray-900 placeholder-gray-400 transition-colors bg-transparent">
+                            <span asp-validation-for="ConfirmPassword" class="text-red-600 text-xs mt-1 block"></span>
+                        </div>
+
+                        <!-- reCAPTCHA -->
+                        <div class="flex justify-center mb-6">
+                            <div class="g-recaptcha" data-sitekey="6LdT_PcrAAAAANwssuXWWRSq0u5l6lEPcVAxjl-Y"></div>
+                        </div>
+                        <div id="recaptcha-error" class="text-red-600 text-xs text-center mb-4" style="display:none;">Please complete the reCAPTCHA verification.</div>
+
+                        <!-- Sign Up Button -->
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 rounded-full hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ease-out shadow-md hover:shadow-lg mb-6">
+                            <span class="uppercase tracking-wide text-base">SIGN UP</span>
+                        </button>
+                    </form>
+
+                    <!-- Social Login Divider -->
+                    <div class="flex items-center mb-6">
+                        <div class="flex-grow border-t border-gray-300"></div>
+                        <span class="px-4 text-gray-500 text-sm">Or continue with</span>
+                        <div class="flex-grow border-t border-gray-300"></div>
+                    </div>
+
+                    <!-- Social Login Icons -->
+                    <div class="flex items-center justify-center space-x-6 mb-6">
+                        <a asp-action="FacebookRegister" asp-controller="Auth" class="group hover:opacity-80 transition-all duration-200 hover:scale-110 active:scale-95">
+                            <img src="/images/facebooksvg.svg" alt="Facebook" class="w-10 h-10 cursor-pointer">
+                        </a>
+                        <a asp-action="GoogleRegister" asp-controller="Auth" class="group hover:opacity-80 transition-all duration-200 hover:scale-110 active:scale-95">
+                            <img src="/images/googlesvg.svg" alt="Google" class="w-10 h-10 cursor-pointer">
+                        </a>
+                    </div>
+
+                    <!-- Sign In Link -->
+                    <p class="text-center text-sm text-gray-500">
+                        Already have an account?
+                        <a asp-action="Login" asp-controller="Auth" class="text-red-600 hover:underline font-medium ml-1">Sign In</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <script>
+            document.querySelector('form').addEventListener('submit', function(e) {
+                var recaptchaResponse = grecaptcha.getResponse();
+                var errorDiv = document.getElementById('recaptcha-error');
+                
+                if (!recaptchaResponse) {
+                    e.preventDefault();
+                    if (errorDiv) {
+                        errorDiv.style.display = 'block';
+                    }
+                    return false;
+                }
+                
+                if (errorDiv) {
+                    errorDiv.style.display = 'none';
+                }
+                return true;
+            });
+        </script>
+    </body>
+    
+    </html>
+}
+else
+{
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+         <title>Foodiesaur</title>
+        <link rel="icon" type="image/svg+xml" href="~/images/titlelogo.svg">
+        <link rel="alternate icon" type="image/png" href="~/images/titlelogo.png">
+        <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+        <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/Capstone.styles.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/output.css" asp-append-version="true" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+        <style>
+            @@keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            .animate-fade-in-up {
+                animation: fadeInUp 0.6s ease-out;
+            }
+        </style>
+    </head>
+    
+    <!-- Mobile Interface -->
+    <div class="min-h-screen bg-gray-50">
+        <!-- Curved green header -->
+        <div class="w-full">
+            <img src="~/images/Group 251.png" alt="Alternate Text" />
+            <div class="h-full flex items-end justify-center">
+                <div class="text-center pb-6">
+                </div>
+            </div>
+        </div>
+
+        <!-- Body -->
+        <div class="max-w-sm mx-auto px-6 animate-fade-in-up">
+            <p class="text-center text-gray-500 text-sm mb-3">First create your account</p>
+
+            <form asp-action="Register" asp-controller="Auth" method="post" class="space-y-1">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-red-600 text-sm mb-4"></div>
+
+                <!-- Full Name -->
+                <div>
+                    <input asp-for="Name" type="text" placeholder="Full name" class="w-full border-b border-gray-300 focus:outline-none focus:border-gray-500 p-2">
+                    <span asp-validation-for="Name" class="text-red-600 text-sm"></span>
+                </div>
+
+                <!-- Email -->
+                <div>
+                    <input asp-for="Email" type="email" placeholder="Email" class="w-full border-b border-gray-300 focus:outline-none focus:border-gray-500 p-2">
+                    <span asp-validation-for="Email" class="text-red-600 text-sm"></span>
+                </div>
+
+                <!-- Password -->
+                <div>
+                    <input asp-for="Password" type="password" placeholder="Password" class="w-full border-b border-gray-300 focus:outline-none focus:border-gray-500 p-2">
+                    <span asp-validation-for="Password" class="text-red-600 text-sm"></span>
+                </div>
+
+                <!-- Confirm Password -->
+                <div>
+                    <input asp-for="ConfirmPassword" type="password" placeholder="Confirm your password" class="w-full border-b border-gray-300 focus:outline-none focus:border-gray-500 p-2">
+                    <span asp-validation-for="ConfirmPassword" class="text-red-600 text-sm"></span>
+                </div>
+
+                <!-- reCAPTCHA -->
+                <div class="flex justify-center mb-4 mt-4">
+                    <div class="g-recaptcha" data-sitekey="6LdT_PcrAAAAANwssuXWWRSq0u5l6lEPcVAxjl-Y"></div>
+                </div>
+                <div id="recaptcha-error-mobile" class="text-red-600 text-sm text-center mb-2" style="display:none;">Please complete the reCAPTCHA verification.</div>
+
+                <!-- Sign Up Button -->
+                <div class="text-center mt-4">
+                    <button type="submit" class="group w-50 bg-sky-600 hover:bg-sky-700 text-white py-1 rounded-3xl hover:scale-105 active:scale-95 transition-all duration-300 ease-out shadow-lg hover:shadow-xl relative overflow-hidden">
+                        <span class="relative z-10">SIGN UP</span>
+                        <div class="absolute inset-0 bg-gradient-to-r from-sky-500/20 to-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    </button>
+                </div>
+            </form>
+
+            <!-- OAuth Registration Options -->
+            <div class="flex items-center p-3">
+                <div class="flex-grow border-t border-gray-300"></div>
+                <span class="px-3 text-gray-500 text-sm">Or sign up with</span>
+                <div class="flex-grow border-t border-gray-300"></div>
+            </div>
+
+                <div class="flex items-center justify-center space-x-4">
+                    <a asp-action="GoogleRegister" asp-controller="Auth" class="group hover:opacity-80 transition-all duration-300 hover:scale-110 active:scale-95">
+                        <img src="/images/googlesvg.svg" alt="Google" class="w-8 h-8 cursor-pointer group-hover:drop-shadow-lg transition-all duration-300">
+                    </a>
+                    <a asp-action="FacebookRegister" asp-controller="Auth" class="group hover:opacity-80 transition-all duration-300 hover:scale-110 active:scale-95">
+                        <img src="/images/facebooksvg.svg" alt="Facebook" class="w-8 h-8 cursor-pointer group-hover:drop-shadow-lg transition-all duration-300">
+                    </a>
+                </div>
+            
+            <p class="text-center mt-4 text-sm text-gray-500">
+                Already have an account?
+                <a asp-action="Login" asp-controller="Auth" class="text-red-500 hover:underline">Sign In</a>
+            </p>
+        </div>
+    </div>
+    </html>
+}
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
+<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+<script>
+    // reCAPTCHA validation for mobile Register form
+    var mobileForm = document.querySelector('.max-w-sm form');
+    if (mobileForm) {
+        mobileForm.addEventListener('submit', function(e) {
+            var recaptchaResponse = grecaptcha.getResponse();
+            var errorDiv = document.getElementById('recaptcha-error-mobile');
+            
+            if (!recaptchaResponse) {
+                e.preventDefault();
+                if (errorDiv) {
+                    errorDiv.style.display = 'block';
+                }
+                return false;
+            }
+            
+            if (errorDiv) {
+                errorDiv.style.display = 'none';
+            }
+            return true;
+        });
+    }
+</script>

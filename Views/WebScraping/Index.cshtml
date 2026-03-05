@@ -1,0 +1,453 @@
+@{
+    ViewData["Title"] = "Web Scraping Test Center";
+}
+
+<div class="min-h-screen bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 p-6">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-white mb-2">🕷️ Web Scraping Test Center</h1>
+            <p class="text-xl text-white/80">Test ScrapingBee API integration for restaurant data extraction</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column - Input Forms -->
+            <div class="space-y-6">
+                <!-- Basic URL Scraping -->
+                <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
+                    <div class="flex items-center mb-4">
+                        <span class="text-2xl mr-3">🔍</span>
+                        <h2 class="text-xl font-semibold text-white">Basic URL Scraping</h2>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-white/80 text-sm font-medium mb-2">Enter URL to scrape:</label>
+                            <input type="url" id="basicUrl" class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50" 
+                                   placeholder="https://example.com" value="https://www.tripadvisor.com/Restaurant_Review-g298459-d17329235-Reviews-Madayaw_Cafe-Davao_City_Davao_del_Sur_Province_Mindanao.html?m=69573">
+                        </div>
+                        <button onclick="testBasicScraping()"
+                                class="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-4 rounded-lg transition-colors">
+                            Test Basic Scraping
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ScrapingBee API Testing -->
+                <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
+                    <div class="flex items-center mb-4">
+                        <span class="text-2xl mr-3">🐝</span>
+                        <h2 class="text-xl font-semibold text-white">ScrapingBee API Testing</h2>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-white/80 text-sm font-medium mb-2">Enter URL to scrape:</label>
+                            <input type="url" id="scrapingBeeUrl" class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50" 
+                                   placeholder="https://example.com" value="https://www.tripadvisor.com/Restaurant_Review-g298459-d17329235-Reviews-Madayaw_Cafe-Davao_City_Davao_del_Sur_Province_Mindanao.html?m=69573">
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="renderJs" class="mr-2">
+                            <label for="renderJs" class="text-white/80 text-sm">Render JavaScript</label>
+                        </div>
+                        <button onclick="testScrapingBee()" 
+                                class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-4 rounded-lg transition-colors">
+                            Test ScrapingBee API
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Restaurant Data Extraction -->
+                <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
+                    <div class="flex items-center mb-4">
+                        <span class="text-2xl mr-3">🍽️</span>
+                        <h2 class="text-xl font-semibold text-white">Restaurant Data Extraction</h2>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-white/80 text-sm font-medium mb-2">Restaurant URL:</label>
+                            <input type="url" id="restaurantUrl" class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50" 
+                                   placeholder="https://restaurant.com" value="https://www.tripadvisor.com/Restaurant_Review-g298459-d17329235-Reviews-Madayaw_Cafe-Davao_City_Davao_del_Sur_Province_Mindanao.html?m=69573">
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="restaurantRenderJs" checked class="mr-2">
+                            <label for="restaurantRenderJs" class="text-white/80 text-sm">Render JavaScript</label>
+                        </div>
+                        <button onclick="extractRestaurantData()" 
+                                class="w-full bg-purple-500 hover:bg-purple-600 text-white font-medium py-3 px-4 rounded-lg transition-colors">
+                            Extract Restaurant Data
+                        </button>
+                        <button onclick="debugScrapedContent()" 
+                                class="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-4 rounded-lg transition-colors mt-2">
+                            Debug Content Structure
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sample URLs -->
+                <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
+                    <div class="flex items-center mb-4">
+                        <span class="text-2xl mr-3">⚡</span>
+                        <h2 class="text-xl font-semibold text-white">Quick Test URLs</h2>
+                    </div>
+                    <button onclick="loadSampleUrls()" 
+                            class="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-4 rounded-lg transition-colors">
+                        Load Sample URLs
+                    </button>
+                </div>
+
+                <!-- Menu Link Generator -->
+                <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
+                    <div class="flex items-center mb-4">
+                        <span class="text-2xl mr-3">🔗</span>
+                        <h2 class="text-xl font-semibold text-white">Menu Link Generator</h2>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-white/80 text-sm font-medium mb-2">Enter Google Maps Overview URL:</label>
+                            <input type="url" id="overviewUrl" class="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50" 
+                                   placeholder="https://www.google.com/maps/place/..." value="">
+                        </div>
+                        <button onclick="generateMenuLink()"
+                                class="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-medium py-3 px-4 rounded-lg transition-colors">
+                            Generate Menu Link
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Results -->
+            <div class="space-y-6">
+                <!-- Basic Scraping Results -->
+                <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
+                    <h3 class="text-lg font-semibold text-white mb-4">Basic Scraping Results</h3>
+                    <div id="basicResults" class="text-white/80">
+                        <p class="text-sm">Click "Test Basic Scraping" to see results here.</p>
+                    </div>
+                </div>
+
+                <!-- ScrapingBee Results -->
+                <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
+                    <h3 class="text-lg font-semibold text-white mb-4">ScrapingBee API Results</h3>
+                    <div id="scrapingBeeResults" class="text-white/80">
+                        <p class="text-sm">Click "Test ScrapingBee API" to see results here.</p>
+                    </div>
+                </div>
+
+                <!-- Restaurant Data Results -->
+                <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
+                    <h3 class="text-lg font-semibold text-white mb-4">Restaurant Data Results</h3>
+                    <div id="restaurantResults" class="text-white/80">
+                        <p class="text-sm">Click "Extract Restaurant Data" to see results here.</p>
+                    </div>
+                </div>
+
+                <!-- Menu Link Results -->
+                <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
+                    <h3 class="text-lg font-semibold text-white mb-4">Menu Link Results</h3>
+                    <div id="menuLinkResults" class="text-white/80">
+                        <p class="text-sm">Click "Generate Menu Link" to see results here.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function testBasicScraping() {
+        const url = document.getElementById('basicUrl').value;
+        if (!url) {
+            alert('Please enter a URL');
+            return;
+        }
+
+        const resultsDiv = document.getElementById('basicResults');
+        resultsDiv.innerHTML = '<p class="text-yellow-400">Testing basic scraping...</p>';
+
+        try {
+            const response = await fetch('/WebScraping/TestBasicScraping', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `url=${encodeURIComponent(url)}`
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                resultsDiv.innerHTML = `
+                    <div class="space-y-2">
+                        <p><strong>Status:</strong> <span class="text-green-400">Success</span></p>
+                        <p><strong>Content Length:</strong> ${data.contentLength.toLocaleString()} characters</p>
+                        <p><strong>Preview:</strong></p>
+                        <div class="bg-black/20 p-3 rounded text-xs font-mono overflow-auto max-h-40">
+                            ${data.preview}
+                        </div>
+                    </div>
+                `;
+            } else {
+                resultsDiv.innerHTML = `<p class="text-red-400">Error: ${data.message}</p>`;
+            }
+        } catch (error) {
+            resultsDiv.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+        }
+    }
+
+    async function testScrapingBee() {
+        const url = document.getElementById('scrapingBeeUrl').value;
+        const renderJs = document.getElementById('renderJs').checked;
+        
+        if (!url) {
+            alert('Please enter a URL');
+            return;
+        }
+
+        const resultsDiv = document.getElementById('scrapingBeeResults');
+        resultsDiv.innerHTML = '<p class="text-yellow-400">Testing ScrapingBee API...</p>';
+
+        try {
+            const response = await fetch('/WebScraping/TestScrapingBee', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `url=${encodeURIComponent(url)}&renderJs=${renderJs}`
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                resultsDiv.innerHTML = `
+                    <div class="space-y-2">
+                        <p><strong>Status:</strong> <span class="text-green-400">Success</span></p>
+                        <p><strong>Status Code:</strong> ${data.statusCode}</p>
+                        <p><strong>Content Length:</strong> ${data.contentLength.toLocaleString()} characters</p>
+                        <p><strong>Preview:</strong></p>
+                        <div class="bg-black/20 p-3 rounded text-xs font-mono overflow-auto max-h-40">
+                            ${data.preview}
+                        </div>
+                    </div>
+                `;
+            } else {
+                resultsDiv.innerHTML = `<p class="text-red-400">Error: ${data.message}</p>`;
+            }
+        } catch (error) {
+            resultsDiv.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+        }
+    }
+
+    async function extractRestaurantData() {
+        const url = document.getElementById('restaurantUrl').value;
+        const renderJs = document.getElementById('restaurantRenderJs').checked;
+        
+        if (!url) {
+            alert('Please enter a URL');
+            return;
+        }
+
+        const resultsDiv = document.getElementById('restaurantResults');
+        resultsDiv.innerHTML = '<p class="text-yellow-400">Extracting restaurant data...</p>';
+
+        try {
+            const response = await fetch('/WebScraping/ExtractRestaurantData', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `url=${encodeURIComponent(url)}&renderJs=${renderJs}`
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                const restaurant = data.restaurantData;
+                resultsDiv.innerHTML = `
+                    <div class="space-y-3">
+                        <p><strong>Status:</strong> <span class="text-green-400">Success</span></p>
+                        <div class="bg-black/20 p-4 rounded">
+                            <p><strong>Name:</strong> ${restaurant.name || 'Not found'}</p>
+                            <p><strong>Description:</strong> ${restaurant.description || 'Not found'}</p>
+                            <p><strong>Rating:</strong> ${restaurant.rating || 'Not found'}</p>
+                            <p><strong>Phone:</strong> ${restaurant.phoneNumber || 'Not found'}</p>
+                            <p><strong>Address:</strong> ${restaurant.address || 'Not found'}</p>
+                            <p><strong>Menu Items:</strong> ${restaurant.menuItems.length} found</p>
+                            ${restaurant.menuItems.length > 0 ? `
+                                <div class="mt-2 max-h-40 overflow-auto">
+                                    ${restaurant.menuItems.slice(0, 5).map(item => `
+                                        <div class="text-xs border-b border-white/20 py-1">
+                                            <strong>${item.name}</strong> - ${item.price ? '₱' + item.price : 'No price'}
+                                            ${item.imageUrl ? `<br><img src="${item.imageUrl}" class="w-16 h-16 object-cover rounded mt-1">` : ''}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            } else {
+                resultsDiv.innerHTML = `<p class="text-red-400">Error: ${data.message}</p>`;
+            }
+        } catch (error) {
+            resultsDiv.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+        }
+    }
+
+    async function debugScrapedContent() {
+        const url = document.getElementById('restaurantUrl').value;
+        
+        if (!url) {
+            alert('Please enter a URL');
+            return;
+        }
+
+        const resultsDiv = document.getElementById('restaurantResults');
+        resultsDiv.innerHTML = '<p class="text-yellow-400">Analyzing content structure...</p>';
+
+        try {
+            const response = await fetch('/WebScraping/DebugScrapedContent', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ url: url })
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                const analysis = data.analysis;
+                resultsDiv.innerHTML = `
+                    <div class="space-y-3">
+                        <p><strong>Status:</strong> <span class="text-green-400">Debug Analysis Complete</span></p>
+                        <div class="bg-black/20 p-4 rounded text-sm">
+                            <p><strong>Title:</strong> ${analysis.title || 'Not found'}</p>
+                            <p><strong>Is TripAdvisor:</strong> ${analysis.isTripAdvisor ? 'Yes' : 'No'}</p>
+                            <p><strong>H1 Count:</strong> ${analysis.h1Count}</p>
+                            <p><strong>H1 Texts:</strong> ${analysis.h1Texts ? analysis.h1Texts.join(', ') : 'None'}</p>
+                            <p><strong>Rating Elements:</strong> ${analysis.ratingElements}</p>
+                            <p><strong>Bubble Elements:</strong> ${analysis.bubbleElements}</p>
+                            <p><strong>fzMdv Elements:</strong> ${analysis.fzMdvElements}</p>
+                            <p><strong>fHvkI Elements:</strong> ${analysis.fHvkIElements}</p>
+                            <p><strong>fIrGe Elements:</strong> ${analysis.fIrGeElements}</p>
+                            <p><strong>Address Elements:</strong> ${analysis.addressElements}</p>
+                            <p><strong>Phone Elements:</strong> ${analysis.phoneElements}</p>
+                            <p><strong>Content Length:</strong> ${analysis.contentLength} characters</p>
+                            ${analysis.jsonAnalysis ? `
+                                <div class="mt-2">
+                                    <p><strong>JSON Analysis:</strong></p>
+                                    <div class="bg-black/40 p-2 rounded text-xs max-h-32 overflow-auto whitespace-pre-wrap">
+                                        ${analysis.jsonAnalysis}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            <div class="mt-2">
+                                <p><strong>Content Preview:</strong></p>
+                                <div class="bg-black/40 p-2 rounded text-xs max-h-32 overflow-auto">
+                                    ${analysis.preview}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                resultsDiv.innerHTML = `<p class="text-red-400">Error: ${data.message}</p>`;
+            }
+        } catch (error) {
+            resultsDiv.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+        }
+    }
+
+    async function loadSampleUrls() {
+        try {
+            const response = await fetch('/WebScraping/GetSampleUrls');
+            const data = await response.json();
+            
+            // Update all URL inputs with sample URLs
+            const urls = data.urls;
+            document.getElementById('basicUrl').value = urls[0];
+            document.getElementById('scrapingBeeUrl').value = urls[0];
+            document.getElementById('restaurantUrl').value = urls[0];
+            
+            alert('Sample URLs loaded successfully!');
+        } catch (error) {
+            alert('Error loading sample URLs: ' + error.message);
+        }
+    }
+
+    async function generateMenuLink() {
+        const overviewUrl = document.getElementById('overviewUrl').value;
+        if (!overviewUrl) {
+            alert('Please enter a Google Maps overview URL');
+            return;
+        }
+
+        const resultsDiv = document.getElementById('menuLinkResults');
+        resultsDiv.innerHTML = '<p class="text-yellow-400">Generating menu link...</p>';
+
+        try {
+            const response = await fetch('/WebScraping/GenerateMenuLink', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `overviewUrl=${encodeURIComponent(overviewUrl)}`
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                resultsDiv.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="p-4 bg-green-500/20 rounded-lg border border-green-500/30">
+                            <p class="text-green-400 font-semibold mb-2">✅ Menu Link Generated Successfully!</p>
+                        </div>
+                        
+                        <div>
+                            <p class="text-white font-medium mb-2">📋 Original Overview URL:</p>
+                            <div class="bg-black/20 p-3 rounded text-xs font-mono break-all">
+                                ${data.originalUrl}
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <p class="text-white font-medium mb-2">🔗 Generated Menu URL:</p>
+                            <div class="bg-black/20 p-3 rounded text-xs font-mono break-all">
+                                ${data.menuUrl}
+                            </div>
+                        </div>
+                        
+                        <div class="flex space-x-2">
+                            <button onclick="copyToClipboard('${data.menuUrl}')" 
+                                    class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm transition-colors">
+                                📋 Copy Menu URL
+                            </button>
+                            <a href="${data.menuUrl}" target="_blank" 
+                               class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-sm transition-colors inline-block">
+                                🔗 Open Menu Link
+                            </a>
+                        </div>
+                        
+                        <div class="mt-4 p-3 bg-blue-500/20 rounded border border-blue-500/30">
+                            <p class="text-blue-300 text-sm">
+                                💡 <strong>Tip:</strong> Use this menu URL to scrape restaurant menu images and details from Google Maps!
+                            </p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                resultsDiv.innerHTML = `<p class="text-red-400">Error: ${data.message}</p>`;
+            }
+        } catch (error) {
+            resultsDiv.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+        }
+    }
+
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(function() {
+            alert('Menu URL copied to clipboard!');
+        }, function(err) {
+            console.error('Could not copy text: ', err);
+            alert('Failed to copy URL. Please copy manually.');
+        });
+    }
+</script>
