@@ -73,7 +73,11 @@ Update `appsettings.json` (or environment-specific config) with valid values:
 - `Recaptcha:SiteKey`
 - `Recaptcha:SecretKey`
 
-> Important: Do not commit real secrets. Use local environment configuration or user secrets for sensitive values.
+## Web Url Link
+
+```bash
+foodiesaur.runasp.net
+```
 
 ## Local Setup (Step-by-Step)
 
@@ -114,7 +118,7 @@ By default, development launch settings include:
 - `https://localhost:7217`
 - `http://localhost:5081`
 
-## Suggested HTE Demo Flow
+## Suggested Demo Flow
 
 1. Open the app and create/sign in to an account.
 2. Complete onboarding (preferences, dietary/health profile).
