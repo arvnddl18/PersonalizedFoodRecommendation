@@ -13,7 +13,7 @@ FoodieSaur is a capstone web application that combines:
 
 to provide food recommendations that are practical and personalized in real time.
 
-## What HTE Evaluators Should Know
+## What You Should Know
 
 - **System type:** ASP.NET Core MVC web application (`.NET 8`).
 - **Core output:** Personalized food and nearby restaurant recommendations.
